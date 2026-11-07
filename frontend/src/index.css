@@ -1,0 +1,277 @@
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Nunito:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
+@import 'tailwindcss';
+
+@utility border-3 {
+  border-width: 3px;
+}
+
+:root {
+  --primary: #fdbcb4;
+  --primary-dark: #f5a69d;
+  --secondary: #add8e6;
+  --secondary-dark: #8bc4d6;
+  --cta: #22c55e;
+  --cta-dark: #16a34a;
+  --accent-purple: #e6e6fa;
+  --accent-mint: #98ff98;
+  --bg: #ffffff;
+  --bg-cream: #fff9f5;
+  --text: #2d3748;
+  --text-muted: #64748b;
+  --border: #e2e8f0;
+
+  /* === Aliases for existing auth/inner-app pages === */
+  --color-primary: #22c55e;
+  --color-primary-hover: #16a34a;
+  --color-primary-light: rgba(34, 197, 94, 0.1);
+  --color-secondary: #add8e6;
+  --color-accent: #fdbcb4;
+  --color-text: #2d3748;
+  --color-text-2: #2d3748;
+  --color-muted: #64748b;
+  --color-surface: #ffffff;
+  --color-surface-2: #fff9f5;
+  --color-bg: #ffffff;
+  --color-border: rgba(45, 55, 72, 0.15);
+  --color-border-2: #e2e8f0;
+
+  /* Status */
+  --color-up: #22c55e;
+  --color-up-hover: #16a34a;
+  --color-down: #ef4444;
+  --color-warning: #f59e0b;
+  --color-pending: #3b82f6;
+  --color-maintenance: #a855f7;
+
+  /* Shadow aliases → LearnHub offset style */
+  --clay-shadow-sm: 2px 2px 0 #2d3748;
+  --clay-shadow-md: 4px 4px 0 #2d3748;
+  --clay-shadow-lg: 6px 6px 0 #2d3748, inset 0 -4px rgba(0, 0, 0, 0.08);
+  --clay-shadow-btn: 4px 4px 0 #2d3748;
+  --clay-shadow-btn-hover: 2px 2px 0 #2d3748;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  font-family:
+    'Nunito',
+    system-ui,
+    -apple-system,
+    sans-serif;
+  background: var(--bg-cream);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: 'Be Vietnam Pro', 'Nunito', sans-serif;
+}
+
+/* === Clay card === */
+.clay-card {
+  background: var(--bg);
+  border-radius: 24px;
+  border: 3px solid var(--text);
+  box-shadow:
+    6px 6px 0 var(--text),
+    inset 0 -4px rgba(0, 0, 0, 0.08);
+  transition:
+    box-shadow 0.2s,
+    transform 0.2s;
+}
+
+.clay-card:hover {
+  box-shadow:
+    4px 4px 0 var(--text),
+    inset 0 -4px rgba(0, 0, 0, 0.08);
+  transform: translate(2px, 2px);
+}
+
+/* === Soft clay (feature cards — no border, soft shadow) === */
+.soft-clay {
+  background: var(--bg);
+  border-radius: 24px;
+  box-shadow:
+    rgba(0, 0, 0, 0.08) 0px 8px 30px,
+    rgba(0, 0, 0, 0.05) 0px -4px inset;
+}
+
+/* === Primary button (green + offset shadow) === */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.875rem 1.75rem;
+  background: var(--cta);
+  color: #ffffff;
+  font-weight: 700;
+  font-family: 'Nunito', sans-serif;
+  border-radius: 16px;
+  border: 3px solid var(--text);
+  box-shadow: 4px 4px 0 var(--text);
+  transition: 0.15s;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn-primary:hover:not(:disabled) {
+  box-shadow: 2px 2px 0 var(--text);
+  transform: translate(2px, 2px);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* === Secondary button (light-blue + offset shadow) === */
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.875rem 1.75rem;
+  background: var(--secondary);
+  color: var(--text);
+  font-weight: 700;
+  font-family: 'Nunito', sans-serif;
+  border-radius: 16px;
+  border: 3px solid var(--text);
+  box-shadow: 4px 4px 0 var(--text);
+  transition: 0.15s;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  box-shadow: 2px 2px 0 var(--text);
+  transform: translate(2px, 2px);
+}
+
+/* === Danger helpers (auth / settings pages) === */
+.btn-ghost-danger:hover {
+  background: rgba(239, 68, 68, 0.08) !important;
+}
+
+.btn-outline-danger:hover {
+  background: rgba(239, 68, 68, 0.14) !important;
+  border-color: rgba(239, 68, 68, 0.5) !important;
+}
+
+/* === Auth page blob decorations === */
+.clay-blob {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.25;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes blob-float {
+  0%,
+  100% {
+    transform: translateY(0px) scale(1);
+  }
+  33% {
+    transform: translateY(-16px) scale(1.02);
+  }
+  66% {
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+.blob-float {
+  animation: blob-float 8s ease-in-out infinite;
+}
+.blob-float-delay {
+  animation: blob-float 10s ease-in-out infinite 2s;
+}
+.blob-float-slow {
+  animation: blob-float 13s ease-in-out infinite 4s;
+}
+
+/* === Status pulse === */
+@keyframes status-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.8);
+  }
+}
+
+.status-pulse {
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+/* === Confirm animation === */
+@keyframes fade-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-confirm {
+  animation: fade-slide-in 180ms ease-out;
+}
+
+/* === Scrollbar === */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* === Focus ring === */
+:focus-visible {
+  outline: 2px solid var(--cta);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* === Accessibility === */
+:disabled {
+  cursor: not-allowed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

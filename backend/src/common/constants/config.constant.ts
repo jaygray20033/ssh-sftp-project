@@ -1,0 +1,5 @@
+export const SALT_ROUNDS = 10
+export const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000
+export const RATE_LIMIT_MAX_REQUESTS_GLOBAL = 100
+export const RATE_LIMIT_MAX_REQUESTS_AUTH = 5
+export const RATE_LIMIT_MAX_REQUESTS_DEV = 10000

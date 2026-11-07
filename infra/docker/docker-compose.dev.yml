@@ -1,0 +1,48 @@
+# Development helpers: PostgreSQL + a throw-away SSH server to connect to.
+#
+#   cd infra/docker
+#   docker compose -f docker-compose.dev.yml up -d
+#
+# Backend and frontend then run on the host (`pnpm dev`), see README.
+# DEV ONLY — the credentials below are public and must never be used in production.
+
+name: shelldeck-dev
+
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: shelldeck-dev-db
+    environment:
+      POSTGRES_USER: shelldeck
+      POSTGRES_PASSWORD: shelldeck
+      POSTGRES_DB: shelldeck
+    ports:
+      - '5432:5432'
+    volumes:
+      - shelldeck-dev-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U shelldeck -d shelldeck']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  sshd:
+    image: lscr.io/linuxserver/openssh-server:latest
+    container_name: shelldeck-dev-sshd
+    hostname: shelldeck-sshd
+    environment:
+      PUID: 1000
+      PGID: 1000
+      TZ: Asia/Ho_Chi_Minh
+      USER_NAME: dev
+      USER_PASSWORD: dev
+      PASSWORD_ACCESS: 'true'
+      SUDO_ACCESS: 'false'
+    ports:
+      - '2222:2222'
+    volumes:
+      - shelldeck-dev-sshd:/config
+
+volumes:
+  shelldeck-dev-db:
+  shelldeck-dev-sshd:

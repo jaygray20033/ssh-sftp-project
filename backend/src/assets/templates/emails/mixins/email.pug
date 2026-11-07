@@ -1,0 +1,28 @@
+mixin button(text, href)
+  a.button(href=href)= text
+
+mixin text(content, className)
+  p(class=className)&attributes(attributes)
+    block
+
+mixin divider
+  hr.divider
+
+mixin codeBox(code, label = 'MÃ XÁC THỰC')
+  .code-box
+    p.code-label= label
+    p.code-value= code
+
+mixin warningBox(content)
+  .warning-box
+    p.warning-text
+      block
+
+mixin infoCard(icon, title)
+  .card
+    img(src=icon alt=title)
+    h2= title
+    block
+
+mixin footnote(content)
+  p.footer-note= content

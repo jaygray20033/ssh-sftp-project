@@ -1,0 +1,84 @@
+# ShellDeck — run the whole system (db + api + web):
+#
+#   cp .env.example .env        # then fill in the secrets (see comments inside)
+#   docker compose up -d --build
+#
+#   cd infra/docker
+# Open http://localhost  (or http://localhost:${WEB_PORT}).
+
+name: shelldeck
+
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: shelldeck-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-shelldeck}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in infra/docker/.env}
+      POSTGRES_DB: ${POSTGRES_DB:-shelldeck}
+    volumes:
+      - shelldeck-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ../..
+      dockerfile: infra/docker/api.Dockerfile
+    image: shelldeck-api:local
+    container_name: shelldeck-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 8080
+      APP_NAME: ${APP_NAME:-ShellDeck}
+      CLIENT_URL: ${CLIENT_URL:-http://localhost}
+      CLIENT_ORIGINS: ${CLIENT_ORIGINS:-http://localhost}
+      # 1 = only the web container; 2 = plus an nginx on the host in front of it
+      TRUST_PROXY: ${TRUST_PROXY:-1}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      DATABASE_URL: postgres://${POSTGRES_USER:-shelldeck}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-shelldeck}
+      DATABASE_SSL: 'false'
+      AUTO_MIGRATE: 'true'
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?Set ENCRYPTION_KEY (openssl rand -base64 32)}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?Set JWT_REFRESH_SECRET}
+      REFRESH_TOKEN_HASH_SECRET: ${REFRESH_TOKEN_HASH_SECRET:?Set REFRESH_TOKEN_HASH_SECRET}
+      AUTH_TOKEN_HASH_SECRET: ${AUTH_TOKEN_HASH_SECRET:?Set AUTH_TOKEN_HASH_SECRET}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_CALLBACK_URL: ${GOOGLE_CALLBACK_URL:-http://localhost/api/v1/auth/google/callback}
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-nodemailer}
+      MAIL_FROM: ${MAIL_FROM:-noreply@example.com}
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      ENABLE_DOCS: ${ENABLE_DOCS:-false}
+    depends_on:
+      db:
+        condition: service_healthy
+    # Not published: only reachable by `web` through the compose network.
+    expose:
+      - '8080'
+
+  web:
+    build:
+      context: ../..
+      dockerfile: infra/docker/web.Dockerfile
+    image: shelldeck-web:local
+    container_name: shelldeck-web
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - '${WEB_PORT:-80}:80'
+
+volumes:
+  shelldeck-db:

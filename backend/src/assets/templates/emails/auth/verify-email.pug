@@ -1,0 +1,27 @@
+extends ../layouts/default
+include ../mixins/email
+
+block headerTitle
+  | Xác thực email của bạn
+
+block content
+  p.greeting
+    | Xin chào #{name},
+
+  p.description
+    | Cảm ơn bạn đã đăng ký tài khoản tại
+    strong= appName
+    | . Vui lòng nhấn nút bên dưới để xác thực địa chỉ email và kích hoạt tài khoản của bạn.
+
+  .button-container
+    +button('Xác thực email ngay', verifyUrl)
+
+  .info-box
+    p
+      | Link xác thực sẽ
+      strong  hết hạn sau #{expireMinutes} phút
+
+  +divider
+
+  p.description
+    | Nếu bạn không tạo tài khoản này, hãy bỏ qua email này — không có gì thay đổi.
