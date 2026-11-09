@@ -4,6 +4,7 @@ export { default as AuthMiddleware } from '@common/middlewares/auth.middleware'
 export {
   globalRateLimiterMiddleware,
   authRateLimiterMiddleware,
-  sshTestRateLimiterMiddleware
+  sshTestRateLimiterMiddleware,
+  terminalTicketRateLimiterMiddleware
 } from '@common/middlewares/rate-limit.middleware'
 export { validateBody, validateParam, validateQuery } from '@common/middlewares/validate.middleware'

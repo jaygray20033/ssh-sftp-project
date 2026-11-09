@@ -5,7 +5,8 @@ import {
   RATE_LIMIT_MAX_REQUESTS_DEV,
   RATE_LIMIT_MAX_REQUESTS_GLOBAL,
   RATE_LIMIT_WINDOW_MS,
-  SSH_TEST_RATE_LIMIT_PER_MIN
+  SSH_TEST_RATE_LIMIT_PER_MIN,
+  TERMINAL_TICKET_RATE_LIMIT_PER_MIN
 } from '@common/constants'
 
 const isProduction = process.env.NODE_ENV === 'production'
@@ -33,4 +34,13 @@ export const sshTestRateLimiterMiddleware = rateLimit({
   legacyHeaders: false,
   keyGenerator: (req) => req.user?.id ?? ipKeyGenerator(req.ip ?? ''),
   message: { error: 'Too many connection tests, please try again later.' }
+})
+
+export const terminalTicketRateLimiterMiddleware = rateLimit({
+  windowMs: 60 * 1000,
+  limit: TERMINAL_TICKET_RATE_LIMIT_PER_MIN,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  keyGenerator: (req) => req.user?.id ?? ipKeyGenerator(req.ip ?? ''),
+  message: { error: 'Too many terminal tickets, please try again later.' }
 })

@@ -83,6 +83,11 @@ const appEnvSchema = z.object({
   RESET_PASSWORD_EXPIRE_MINUTES: z.coerce.number().int().positive().default(5)
 })
 
+const terminalEnvSchema = z.object({
+  MAX_SESSIONS_PER_USER: z.coerce.number().int().positive().default(5),
+  SESSION_IDLE_TIMEOUT_MIN: z.coerce.number().int().positive().default(30)
+})
+
 const envSchema = z.object({
   ...serverEnvSchema.shape,
   ...databaseEnvSchema.shape,
@@ -90,7 +95,8 @@ const envSchema = z.object({
   ...authEnvSchema.shape,
   ...googleEnvSchema.shape,
   ...emailEnvSchema.shape,
-  ...appEnvSchema.shape
+  ...appEnvSchema.shape,
+  ...terminalEnvSchema.shape
 })
 
 type ParsedEnv = z.infer<typeof envSchema>

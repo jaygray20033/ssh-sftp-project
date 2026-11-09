@@ -60,6 +60,8 @@ services:
       SMTP_PASS: ${SMTP_PASS:-}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       ENABLE_DOCS: ${ENABLE_DOCS:-false}
+      MAX_SESSIONS_PER_USER: ${MAX_SESSIONS_PER_USER:-5}
+      SESSION_IDLE_TIMEOUT_MIN: ${SESSION_IDLE_TIMEOUT_MIN:-30}
     depends_on:
       db:
         condition: service_healthy

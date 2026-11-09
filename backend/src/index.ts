@@ -3,6 +3,8 @@ import 'dotenv/config'
 import env from '@common/config/env'
 import logger from '@common/config/logger'
 
+import { attachTerminalGateway, closeTerminalGateway } from '@modules/terminal/terminal.gateway'
+
 import AppDataSource from '@databases/data-source'
 
 import app from './app'
@@ -19,8 +21,12 @@ const bootstrap = async () => {
     logger.info(`Server is running on port ${env.PORT}`)
   })
 
+  attachTerminalGateway(server)
+
   const gracefulShutdown = async (signal: string) => {
     logger.info(`${signal} received. Shutting down gracefully...`)
+
+    await closeTerminalGateway()
 
     server.close(async () => {
       try {

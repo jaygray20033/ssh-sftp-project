@@ -123,22 +123,23 @@ Tuần 3: B08, F06, I03. Tuần 4: B09–B12, F07, I05–I08.
 - **Nghiệm thu:** test được với sshd trong `docker-compose.dev.yml` (sai mật khẩu, đúng mật khẩu, đổi fingerprint → báo `HOST_KEY_CHANGED`).
 
 ### B06 (P0) Terminal gateway (WebSocket)
-- [ ] `pnpm add ws` và `pnpm add -D @types/ws`. Gắn `WebSocketServer({ noServer: true })` vào HTTP server trong `index.ts` qua sự kiện `upgrade`,
+- [x] `pnpm add ws` và `pnpm add -D @types/ws`. Gắn `WebSocketServer({ noServer: true })` vào HTTP server trong `index.ts` qua sự kiện `upgrade`,
       chỉ chấp nhận path `/api/v1/terminal/ws`.
-- [ ] `POST /api/v1/terminal/tickets` (cần Bearer) nhận `{ hostId }`: kiểm tra host thuộc user, trả `{ ticket }`
+- [x] `POST /api/v1/terminal/tickets` (cần Bearer) nhận `{ hostId }`: kiểm tra host thuộc user, trả `{ ticket }`
       (32 byte ngẫu nhiên hex, lưu `node-cache` TTL 30 giây, dùng một lần, gắn userId + hostId; rate limit).
-- [ ] Khi upgrade: kiểm tra header `Origin` nằm trong `CLIENT_ORIGINS`, kiểm tra và **xóa** ticket; sai thì đóng 4401.
-- [ ] Giao thức JSON:
+- [x] Khi upgrade: kiểm tra header `Origin` nằm trong `CLIENT_ORIGINS`, kiểm tra và **xóa** ticket; sai thì đóng 4401.
+- [x] Giao thức JSON:
       - client → server: `{type:'input',data}`, `{type:'resize',cols,rows}`, `{type:'hostkey_accept'}`, `{type:'ping'}`
       - server → client: `{type:'hostkey',fingerprint,status:'new'|'changed'}`, `{type:'ready'}`, `{type:'data',data}`,
         `{type:'error',code,message}`, `{type:'closed',reason}`, `{type:'pong'}`
-- [ ] Luồng: mở SSH → nếu host key mới thì gửi `hostkey` và chờ `hostkey_accept` (timeout 60 giây; chấp nhận thì lưu fingerprint) →
+- [x] Luồng: mở SSH → nếu host key mới thì gửi `hostkey` và chờ `hostkey_accept` (timeout 60 giây; chấp nhận thì lưu fingerprint) →
       `client.shell({ term:'xterm-256color', cols, rows })` → pipe hai chiều; `resize` gọi `stream.setWindow`.
-- [ ] Dọn dẹp: đóng WS thì đóng SSH và ngược lại; không rò listener; xử lý lỗi không làm sập process.
-- [ ] Giới hạn: `MAX_SESSIONS_PER_USER` (mặc định 5), `SESSION_IDLE_TIMEOUT_MIN` (mặc định 30, đóng phiên không có input),
+- [x] Dọn dẹp: đóng WS thì đóng SSH và ngược lại; không rò listener; xử lý lỗi không làm sập process.
+- [x] Giới hạn: `MAX_SESSIONS_PER_USER` (mặc định 5), `SESSION_IDLE_TIMEOUT_MIN` (mặc định 30, đóng phiên không có input),
       kích thước message tối đa (ví dụ 64KB), ping từ server 30 giây để phát hiện kết nối chết.
-- [ ] Test (unit cho ticket service: hết hạn, dùng lại bị từ chối, sai user) và một test tích hợp nếu khả thi.
+- [x] Test (unit cho ticket service: hết hạn, dùng lại bị từ chối, sai user) và một test tích hợp nếu khả thi.
 - **Nghiệm thu:** dùng `wscat`/script Node nối vào sshd thử, gõ `echo hi` nhận được `hi`; đóng WS thì phiên SSH biến mất (`ss`/log).
+      Đã chạy thật với sshd dev (xem Ghi chú cuối file).
 
 ### B07 (P0) Nhật ký phiên (audit)
 - [ ] Entity `SessionLog` (`session_logs`): userId, hostId (nullable khi host bị xóa, `SET NULL`), `hostLabel` (tên host lúc kết nối),
@@ -313,3 +314,12 @@ Tuần 3: B08, F06, I03. Tuần 4: B09–B12, F07, I05–I08.
 - Nghiệm thu S04 (`migration:run` + đăng nhập Swagger + `ssh -p 2222`) cần Docker daemon chạy thật; chưa kiểm tra được trong môi trường tạo repo.
 - Đã có sẵn trong zip (ngoài S01–S04): B01, B02 (migration AddHostsTable), B03, F03, I01/I02/I04/I06 một phần. Chưa tick, cần rà theo từng task.
 - `project-mmm` (Express + MongoDB, JS) không dùng: khác stack so với CLAUDE.md.
+- B06 đã nghiệm thu với sshd thật (`shelldeck-dev-sshd`, cổng 2222) bằng script Node: `echo hi` → `hi`,
+  resize 120x40 → `stty size` trả `40 120`, đóng WS thì `sshd-session dev@pts/0` + `-bash` biến mất.
+  Container sshd dev vẫn đang chạy, tắt bằng `cd infra/docker && docker compose -f docker-compose.dev.yml stop sshd`.
+- Dùng `wscat` phải gửi kèm Origin, nếu không gateway đóng 4401:
+  `wscat -H "Origin: http://localhost:3000" -c "ws://localhost:8080/api/v1/terminal/ws?ticket=<ticket>"`.
+- Terminal chưa ghi audit log (để B07) và chưa cập nhật `hosts.lastConnectedAt` (hiện chỉ `/hosts/:id/test` cập nhật).
+- Cổng 5432 trên máy dev đang bị tiến trình khác chiếm nên chưa chạy được db dev để nghiệm thu B06 qua Swagger;
+  phần HTTP đã kiểm tra bằng script riêng: không Bearer → 401, host của mình → 201 + ticket 64 hex,
+  host người khác → 404, body sai → 422.
