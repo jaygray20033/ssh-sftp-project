@@ -2,10 +2,11 @@ import { z } from 'zod/v4'
 
 import { registry } from '@docs/registry'
 
-import { AuthType } from '@common/constants/host.constant'
+import { AuthType, SshErrorCode } from '@common/constants/host.constant'
 
 import { CreateHostBodySchema } from '@modules/hosts/dto/create-host.dto'
 import { ListHostsQuerySchema } from '@modules/hosts/dto/list-hosts.dto'
+import { TrustHostKeyBodySchema } from '@modules/hosts/dto/trust-host-key.dto'
 import { UpdateHostBodySchema } from '@modules/hosts/dto/update-host.dto'
 
 import {
@@ -153,5 +154,73 @@ registry.registerPath({
     },
     401: unauthorizedResponse('Missing or invalid access token'),
     404: notFound
+  }
+})
+
+const TestHostResultSchema = registry.register(
+  'TestHostResult',
+  z.object({
+    ok: z.boolean().meta({ example: true }),
+    fingerprint: z
+      .string()
+      .nullable()
+      .optional()
+      .meta({ example: 'SHA256:uNiVztksCsDhcc0u9e8BujQXVUpKZIDTMczCvj3tD2s' }),
+    latencyMs: z.number().optional().meta({ example: 120 }),
+    code: z
+      .enum(Object.values(SshErrorCode) as [SshErrorCode, ...SshErrorCode[]])
+      .optional()
+      .meta({ description: 'Only when ok is false' }),
+    message: z.string().optional()
+  })
+)
+
+registry.registerPath({
+  method: 'post',
+  path: '/hosts/{id}/test',
+  tags: ['Hosts'],
+  summary: 'Test the SSH connection',
+  description:
+    'Connects, runs `echo ok` and returns the result. SSH-level failures come back with `ok: false` and a `code` ' +
+    '(AUTH_FAILED, TIMEOUT, REFUSED, HOST_KEY_CHANGED, HOST_KEY_UNVERIFIED, CONNECTION_FAILED). ' +
+    'For the two host key codes, `fingerprint` is the key the server presented. Limited to 10 requests per minute per user.',
+  security,
+  request: { params: hostIdParam },
+  responses: {
+    200: {
+      description: 'Test result',
+      content: {
+        'application/json': {
+          schema: successWrapper(TestHostResultSchema, '/hosts/{id}/test', 200, 'Connection successful')
+        }
+      }
+    },
+    401: unauthorizedResponse('Missing or invalid access token'),
+    404: notFound,
+    429: errorResponse(429, 'Too many tests', 'Too Many Requests')
+  }
+})
+
+registry.registerPath({
+  method: 'post',
+  path: '/hosts/{id}/trust-host-key',
+  tags: ['Hosts'],
+  summary: 'Trust the host key seen in the last test',
+  description: 'Only accepts the fingerprint returned by the most recent test (valid for 10 minutes).',
+  security,
+  request: { params: hostIdParam, ...jsonBody(TrustHostKeyBodySchema) },
+  responses: {
+    200: {
+      description: 'Host key saved',
+      content: {
+        'application/json': {
+          schema: successWrapper(z.object({ host: HostSchema }), '/hosts/{id}/trust-host-key', 200, 'Host key trusted')
+        }
+      }
+    },
+    400: errorResponse(400, 'No matching fingerprint from a recent test', 'Bad Request'),
+    401: unauthorizedResponse('Missing or invalid access token'),
+    404: notFound,
+    422: validationErrorResponse()
   }
 })

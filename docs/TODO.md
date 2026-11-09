@@ -111,15 +111,15 @@ Tuần 3: B08, F06, I03. Tuần 4: B09–B12, F07, I05–I08.
 - **Nghiệm thu:** tạo host `127.0.0.1` bị từ chối khi `false`, được phép khi `true`.
 
 ### B05 (P0) SSH service và kiểm tra kết nối
-- [ ] `pnpm add ssh2` và `pnpm add -D @types/ssh2`. `src/modules/hosts/ssh.service.ts` bọc `ssh2.Client`.
-- [ ] `connect(host)`: giải mã secret tại chỗ, `readyTimeout` 10 giây, `keepaliveInterval` 15 giây, hỗ trợ password và private key (+ passphrase).
-- [ ] `hostVerifier`: tính fingerprint `SHA256:<base64 không padding>` của host key.
+- [x] `pnpm add ssh2` và `pnpm add -D @types/ssh2`. `src/modules/hosts/ssh.service.ts` bọc `ssh2.Client`.
+- [x] `connect(host)`: giải mã secret tại chỗ, `readyTimeout` 10 giây, `keepaliveInterval` 15 giây, hỗ trợ password và private key (+ passphrase).
+- [x] `hostVerifier`: tính fingerprint `SHA256:<base64 không padding>` của host key.
       Nếu host đã lưu fingerprint → phải khớp, khác thì từ chối với mã lỗi `HOST_KEY_CHANGED`.
       Nếu chưa lưu → trả `HOST_KEY_UNVERIFIED` kèm fingerprint để client xác nhận (xem B06).
-- [ ] `POST /hosts/:id/test`: kết nối thử, chạy exec `echo ok`, trả `{ ok, fingerprint, latencyMs }` hoặc lỗi đã phân loại
+- [x] `POST /hosts/:id/test`: kết nối thử, chạy exec `echo ok`, trả `{ ok, fingerprint, latencyMs }` hoặc lỗi đã phân loại
       (`AUTH_FAILED`, `TIMEOUT`, `REFUSED`, `HOST_KEY_CHANGED`, `HOST_KEY_UNVERIFIED`); rate limit riêng (ví dụ 10/phút/user).
-- [ ] `POST /hosts/:id/trust-host-key` nhận `{ fingerprint }`, lưu vào `hostKeyFingerprint` (chỉ khi khớp fingerprint vừa thấy gần nhất; hoặc bắt buộc test trước).
-- [ ] Không log secret/passphrase; lỗi trả về không chứa nội dung nhạy cảm.
+- [x] `POST /hosts/:id/trust-host-key` nhận `{ fingerprint }`, lưu vào `hostKeyFingerprint` (chỉ khi khớp fingerprint vừa thấy gần nhất; hoặc bắt buộc test trước).
+- [x] Không log secret/passphrase; lỗi trả về không chứa nội dung nhạy cảm.
 - **Nghiệm thu:** test được với sshd trong `docker-compose.dev.yml` (sai mật khẩu, đúng mật khẩu, đổi fingerprint → báo `HOST_KEY_CHANGED`).
 
 ### B06 (P0) Terminal gateway (WebSocket)

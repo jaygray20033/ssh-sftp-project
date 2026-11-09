@@ -1,5 +1,9 @@
 export { default as ResponseMiddleware } from '@common/middlewares/response.middleware'
 export { default as ErrorMiddleware } from '@common/middlewares/error.middleware'
 export { default as AuthMiddleware } from '@common/middlewares/auth.middleware'
-export { globalRateLimiterMiddleware, authRateLimiterMiddleware } from '@common/middlewares/rate-limit.middleware'
+export {
+  globalRateLimiterMiddleware,
+  authRateLimiterMiddleware,
+  sshTestRateLimiterMiddleware
+} from '@common/middlewares/rate-limit.middleware'
 export { validateBody, validateParam, validateQuery } from '@common/middlewares/validate.middleware'

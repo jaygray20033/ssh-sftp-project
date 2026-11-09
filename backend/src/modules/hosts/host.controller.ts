@@ -1,6 +1,6 @@
 import { Request, Response } from 'express'
 
-import { CreateHostBody, ListHostsQuerySchema, UpdateHostBody } from './dto'
+import { CreateHostBody, ListHostsQuerySchema, TrustHostKeyBody, UpdateHostBody } from './dto'
 import HostService from './host.service'
 
 class HostController {
@@ -23,6 +23,17 @@ class HostController {
   static async updateHost(req: Request, res: Response) {
     const host = await HostService.updateHost(req.params.id as string, req.user!.id, req.body as UpdateHostBody)
     return res.ok({ host }, { message: 'Host updated successfully' })
+  }
+
+  static async testHost(req: Request, res: Response) {
+    const result = await HostService.testHost(req.params.id as string, req.user!.id)
+    return res.ok(result, { message: result.ok ? 'Connection successful' : 'Connection failed' })
+  }
+
+  static async trustHostKey(req: Request, res: Response) {
+    const { fingerprint } = req.body as TrustHostKeyBody
+    const host = await HostService.trustHostKey(req.params.id as string, req.user!.id, fingerprint)
+    return res.ok({ host }, { message: 'Host key trusted' })
   }
 
   static async deleteHost(req: Request, res: Response) {

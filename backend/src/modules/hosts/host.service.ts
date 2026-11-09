@@ -1,5 +1,5 @@
 import { AuthType } from '@common/constants/host.constant'
-import { ConflictError, NotFoundError } from '@common/errors'
+import { BadRequestError, ConflictError, NotFoundError } from '@common/errors'
 import { CryptoService } from '@common/services'
 import { Paginated } from '@common/types'
 
@@ -8,6 +8,7 @@ import { Host } from '@entities/host.entity'
 import { CreateHostBody, ListHostsQuery, UpdateHostBody } from './dto'
 import { HostResponse, toHostResponse } from './host.mapper'
 import HostRepository from './host.repository'
+import SshService, { TestHostResult } from './ssh.service'
 
 class HostService {
   static async getHosts(userId: string, query: ListHostsQuery): Promise<Paginated<HostResponse>> {
@@ -68,6 +69,21 @@ class HostService {
   static async deleteHost(id: string, userId: string) {
     await this.getOwnedHost(id, userId)
     await HostRepository.delete(id, userId)
+  }
+
+  static async testHost(id: string, userId: string): Promise<TestHostResult> {
+    const host = await this.getOwnedHost(id, userId)
+    return SshService.testConnection(host)
+  }
+
+  static async trustHostKey(id: string, userId: string, fingerprint: string): Promise<HostResponse> {
+    await this.getOwnedHost(id, userId)
+    if (SshService.getSeenFingerprint(userId, id) !== fingerprint) {
+      throw new BadRequestError('Run a connection test first and confirm the fingerprint it returns')
+    }
+    await HostRepository.update(id, userId, { hostKeyFingerprint: fingerprint })
+    SshService.clearSeenFingerprint(userId, id)
+    return this.getHostById(id, userId)
   }
 
   // Used by SSH/SFTP modules: returns the entity (with encrypted columns) only for the owner.
