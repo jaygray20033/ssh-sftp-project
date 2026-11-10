@@ -28,9 +28,16 @@ export type {
   TestHostResult,
   SessionLog,
   PaginatedSessionLogs,
+  TerminalHostKeyStatus,
+  TerminalHostKeyPrompt,
+  TerminalClientMessage,
+  TerminalServerMessage,
+  TerminalTabStatus,
   SftpEntryType,
   SftpEntry
 } from './types'
+
+export { terminalSocketUrl } from './terminal-url'
 
 export { authService } from './services/auth.service'
 export { usersService } from './services/users.service'

@@ -204,17 +204,17 @@ w
 - **Nghiệm thu:** CRUD đầy đủ; secret không bao giờ xuất hiện lại trong UI hoặc tab Network response.
 
 ### F04 (P0) Trang Terminal
-- [ ] `pnpm add @xterm/xterm @xterm/addon-fit @xterm/addon-web-links`; import CSS của xterm.
-- [ ] `pages/terminal/`: store Zustand giữ danh sách tab `{id, hostId, title, status}` và tab đang chọn;
+- [x] `pnpm add @xterm/xterm @xterm/addon-fit @xterm/addon-web-links`; import CSS của xterm.
+- [x] `pages/terminal/`: store Zustand giữ danh sách tab `{id, hostId, title, status}` và tab đang chọn;
       mở tab từ nút "Kết nối" ở Hosts (điều hướng sang `/terminal` kèm tab mới).
-- [ ] `components/TerminalTab`: tạo `Terminal` + `FitAddon`; luồng kết nối: `createTicket` → `new WebSocket(<ws base>/terminal/ws?ticket=...)`
+- [x] `components/TerminalTab`: tạo `Terminal` + `FitAddon`; luồng kết nối: `createTicket` → `new WebSocket(<ws base>/terminal/ws?ticket=...)`
       (ws base suy ra từ `VITE_API_URL`: `http→ws`, `https→wss`, hoặc theo `location` khi dùng đường dẫn tương đối).
-- [ ] Xử lý message theo giao thức B06: `hostkey` mở hộp thoại xác nhận fingerprint (Chấp nhận/Từ chối); `data` ghi vào terminal;
+- [x] Xử lý message theo giao thức B06: `hostkey` mở hộp thoại xác nhận fingerprint (Chấp nhận/Từ chối); `data` ghi vào terminal;
       `error`/`closed` hiện banner và nút **Kết nối lại** (xin ticket mới).
-- [ ] `term.onData` → gửi `input`; `ResizeObserver` + `FitAddon.fit()` → gửi `resize` (debounce ~100ms).
-- [ ] Phím tắt: `Ctrl+Shift+C/V` copy/paste; `Ctrl+C` vẫn gửi SIGINT khi không chọn văn bản.
-- [ ] Nhiều tab; đóng tab thì `ws.close()` và `term.dispose()`; chuyển tab không mất nội dung; rời trang cảnh báo nếu còn phiên mở.
-- [ ] Tùy chọn cỡ chữ và theme sáng/tối lưu `localStorage`.
+- [x] `term.onData` → gửi `input`; `ResizeObserver` + `FitAddon.fit()` → gửi `resize` (debounce ~100ms).
+- [x] Phím tắt: `Ctrl+Shift+C/V` copy/paste; `Ctrl+C` vẫn gửi SIGINT khi không chọn văn bản.
+- [x] Nhiều tab; đóng tab thì `ws.close()` và `term.dispose()`; chuyển tab không mất nội dung; rời trang cảnh báo nếu còn phiên mở.
+- [x] Tùy chọn cỡ chữ và theme sáng/tối lưu `localStorage`.
 - **Nghiệm thu:** vào `vim`, `htop`, `top` hiển thị đúng; đổi kích thước cửa sổ thì terminal co giãn đúng; đóng tab thì phiên SSH đóng.
 
 ### F05 (P0) Trang Settings bổ sung
@@ -336,3 +336,19 @@ w
 - F01: nút "Kết nối" ở `HostCard` chuyển từ disabled sang `/terminal?host=<id>`; trang terminal nhận host từ query.
 - F01: trình duyệt tích hợp không mở được viewport (trả `0x0`) nên không chụp màn hình được; đã kiểm tra bằng snapshot
   và DOM, chưa rà bằng mắt ở các breakpoint.
+- F04: `pnpm migration:run` không chạy được (`Cannot find module 'ts-node'`); đã dùng `AUTO_MIGRATE=true` để API tự
+  apply migration khi khởi động, không thêm dependency.
+- F04: 5432/8080 đang bị project khác chiếm nên nghiệm thu bằng stack tạm — postgres `5433`, API `8090`, sshd `2222`
+  (đã cài thêm vim/htop/top trong container), frontend dev ở `3001` với `VITE_API_URL=http://localhost:8090/api/v1`
+  và `CLIENT_ORIGINS` phải có origin `3001` vì gateway kiểm tra header Origin trước khi nâng cấp WebSocket.
+- F04: app dùng `BrowserRouter` nên `useBlocker`/`usePrompt` không khả dụng (chỉ hoạt động với data router); cảnh báo
+  "rời trang" làm theo kiểu `beforeunload` + bắt click ở capture phase trên `<a>` (nút "Quản lý host" đổi thành `Link`
+  để nằm trong luồng này). Điều hướng bằng `useNavigate()` từ code thì không chặn được, phiên sẽ đóng im lặng.
+- F04: bug tìm ra khi nghiệm thu — frame `resize` đầu tiên gửi trước khi WebSocket mở nên bị rơi, pty ở lại 80x24;
+  `syncSize` chỉ ghi nhận kích thước khi frame thực sự được gửi, do đó `ready` sẽ gửi lại lần đo đầu tiên.
+- F04: proxy `/api` trong `vite.config.ts` thêm `ws: true` để dùng `VITE_API_URL=/api/v1` (đường dẫn tương đối) được ở dev.
+- F04: giữa chừng viewport của trình duyệt tích hợp chuyển sang ẩn (`visibilityState=hidden`) nên xterm ngừng vẽ
+  (`requestAnimationFrame` bị tạm) và không chụp màn hình được nữa; `vim`/`htop` đã chụp và đọc buffer trước đó,
+  riêng `top` kiểm chứng bằng client WebSocket thẳng tới gateway (đúng chuỗi ANSI `Tasks:`/`%Cpu(s):`/`MiB Mem`,
+  gửi `q` thì về prompt). `Ctrl+Shift+C/V` chưa bấm thử trên trình duyệt vì lúc đó đang có phiên thật (`vps-com`)
+  mở ở tab — chỉ mới xác minh `Ctrl+C` gửi SIGINT (`sleep 30` bị ngắt, `ps` không còn process).

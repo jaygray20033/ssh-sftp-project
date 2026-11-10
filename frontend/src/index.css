@@ -305,6 +305,27 @@ h6 {
   animation: console-caret 1.1s step-end infinite;
 }
 
+/* === xterm terminal === */
+.terminal-host {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.terminal-host .xterm {
+  height: 100%;
+}
+
+.terminal-host .xterm-viewport::-webkit-scrollbar {
+  width: 10px;
+}
+.terminal-host .xterm-viewport::-webkit-scrollbar-track {
+  background: transparent;
+}
+.terminal-host .xterm-viewport::-webkit-scrollbar-thumb {
+  background: var(--console-border);
+}
+
 /* === Focus ring === */
 :focus-visible {
   outline: 2px solid var(--cta);

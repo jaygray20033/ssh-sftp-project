@@ -171,6 +171,31 @@ export interface PaginatedSessionLogs {
   total_count?: number
 }
 
+// ─── Terminal WebSocket ──────────────────────────────────────────────────────
+
+export type TerminalHostKeyStatus = 'new' | 'changed'
+
+export interface TerminalHostKeyPrompt {
+  fingerprint: string
+  status: TerminalHostKeyStatus
+}
+
+export type TerminalClientMessage =
+  | { type: 'input'; data: string }
+  | { type: 'resize'; cols: number; rows: number }
+  | { type: 'hostkey_accept' }
+  | { type: 'ping' }
+
+export type TerminalServerMessage =
+  | { type: 'hostkey'; fingerprint: string; status: TerminalHostKeyStatus }
+  | { type: 'ready' }
+  | { type: 'data'; data: string }
+  | { type: 'error'; code: string; message: string }
+  | { type: 'closed'; reason: string }
+  | { type: 'pong' }
+
+export type TerminalTabStatus = 'connecting' | 'open' | 'closed' | 'error'
+
 // ─── SFTP ────────────────────────────────────────────────────────────────────
 
 export type SftpEntryType = 'file' | 'directory' | 'symlink' | 'other'
