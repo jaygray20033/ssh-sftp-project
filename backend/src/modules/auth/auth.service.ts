@@ -3,6 +3,7 @@ import { instanceToPlain } from 'class-transformer'
 import { generateSecret, generateURI, verifySync } from 'otplib'
 
 import { env } from '@common/config'
+import logger from '@common/config/logger'
 import {
   AUTH_TOKEN,
   GOOGLE_AUTH,
@@ -83,7 +84,12 @@ class AuthService {
       { tokenHash: hashAuthToken(token), expiresAt, type: AUTH_TOKEN.VERIFY_EMAIL }
     )
 
-    await AuthService.emailService.sendVerifyEmail(newUser.email, token, newUser.fullName)
+    // A mail failure must not undo the account that was just created.
+    try {
+      await AuthService.emailService.sendVerifyEmail(newUser.email, token, newUser.fullName)
+    } catch (err) {
+      logger.error({ err, email: newUser.email }, 'Verify e-mail could not be sent')
+    }
 
     return instanceToPlain(newUser) as AuthUser
   }
@@ -226,7 +232,11 @@ class AuthService {
       type: AUTH_TOKEN.RESET_PASSWORD,
       expiresAt
     })
-    await this.emailService.sendResetPasswordEmail(user.email, otp)
+    try {
+      await this.emailService.sendResetPasswordEmail(user.email, otp)
+    } catch (err) {
+      logger.error({ err, email: user.email }, 'Reset password e-mail could not be sent')
+    }
   }
 
   static async resetPassword(token: string, newPassword: string): Promise<void> {

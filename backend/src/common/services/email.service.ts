@@ -10,12 +10,14 @@ type EmailSender = {
   send(to: string, subject: string, html: string): Promise<void>
 }
 
+const fromAddress = () => `"${env.MAIL_FROM_NAME || env.APP_NAME}" <${env.MAIL_FROM}>`
+
 class ResendSender implements EmailSender {
   private resend = new Resend(env.RESEND_API_KEY)
 
   async send(to: string, subject: string, html: string): Promise<void> {
     const { error } = await this.resend.emails.send({
-      from: env.MAIL_FROM,
+      from: fromAddress(),
       to,
       subject,
       html
@@ -37,7 +39,7 @@ class NodemailerSender implements EmailSender {
 
   async send(to: string, subject: string, html: string): Promise<void> {
     await this.transporter.sendMail({
-      from: `"${env.APP_NAME}" <${env.MAIL_FROM}>`,
+      from: fromAddress(),
       to,
       subject,
       html

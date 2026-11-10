@@ -1,4 +1,4 @@
-import { createHmac } from 'node:crypto'
+import { createHmac, randomUUID } from 'node:crypto'
 
 import jwt from 'jsonwebtoken'
 
@@ -13,8 +13,10 @@ class TokenService {
   }
 
   static generateRefreshToken(payload: RefreshTokenPayload): string {
+    // Without jti, two logins of one user in the same second sign an identical token and clash on the unique hash.
     return jwt.sign(payload, env.JWT_REFRESH_SECRET, {
-      expiresIn: env.JWT_REFRESH_EXPIRES_IN
+      expiresIn: env.JWT_REFRESH_EXPIRES_IN,
+      jwtid: randomUUID()
     })
   }
 

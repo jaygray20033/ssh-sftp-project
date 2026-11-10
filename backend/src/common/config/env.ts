@@ -70,6 +70,7 @@ const googleEnvSchema = z.object({
 const emailEnvSchema = z.object({
   EMAIL_PROVIDER: z.enum(['nodemailer', 'resend']).default('nodemailer'),
   MAIL_FROM: z.email().default('noreply@example.com'),
+  MAIL_FROM_NAME: z.string().default(''),
   SMTP_HOST: z.string().default('smtp.gmail.com'),
   SMTP_PORT: z.coerce.number().int().default(587),
   SMTP_USER: z.string().default(''),

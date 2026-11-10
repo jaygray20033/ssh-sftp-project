@@ -352,3 +352,33 @@ w
   riêng `top` kiểm chứng bằng client WebSocket thẳng tới gateway (đúng chuỗi ANSI `Tasks:`/`%Cpu(s):`/`MiB Mem`,
   gửi `q` thì về prompt). `Ctrl+Shift+C/V` chưa bấm thử trên trình duyệt vì lúc đó đang có phiên thật (`vps-com`)
   mở ở tab — chỉ mới xác minh `Ctrl+C` gửi SIGINT (`sleep 30` bị ngắt, `ps` không còn process).
+- Auth/SMTP: `backend/.env` đang dùng Gmail thật (`SMTP_HOST=smtp.gmail.com`, `SMTP_PORT=465` → implicit TLS,
+  `MAIL_FROM_NAME=ShellDeck Support`). Probe trực tiếp bằng nodemailer chiều 2026-11-10: `transport.verify()` →
+  **AUTH OK** (app password hợp lệ), `sendMail()` → **550-5.4.5 Daily user sending limit exceeded** ở lệnh DATA.
+  Chặn hoàn toàn phía tài khoản Google, không phải lỗi code: mọi lần gửi hiện chỉ log
+  `ERROR: Verify e-mail could not be sent`, API vẫn 201/200. Chỉ có hai cách = chờ Google reset hạn mức hoặc đổi sang
+  tài khoản SMTP khác (sửa 4 dòng env, không đụng code). Block mailpit (`127.0.0.1:1026`,
+  inbox `http://localhost:8026`) để nguyên dưới dạng comment:
+  `docker run -d --name shelldeck-mailpit -p 1026:1025 -p 8026:8025 axllent/mailpit`.
+  App password Gmail đã lộ trong chat, cần thu hồi và tạo lại.
+- Auth: thêm biến `MAIL_FROM_NAME` (rỗng thì fallback `APP_NAME`) để tên người gửi là "ShellDeck Support" thay vì
+  lấy theo `APP_NAME` (biến này còn dùng cho template và issuer TOTP nên không đổi `APP_NAME`).
+- Auth (fix): `register` và `forgotPassword` gọi `sendVerifyEmail`/`sendResetPasswordEmail` không bọc try/catch, nên
+  khi SMTP lỗi API trả 500 trong lúc user + token đã commit (lần bấm sau bị "Email is already in use", và user
+  không bao giờ nhận link verify). Nay lỗi mail chỉ `logger.error`, API vẫn 201/200.
+- Auth (fix): hai request `POST /auth/login` của cùng một user trong cùng một giây trả **500** vì `generateTokens` ký
+  refresh token JWT chỉ với `sub/email/iat` (đơn vị giây) nên hai token trùng nhau, va chạm unique
+  `refresh_tokens.token`; interceptor `refresh-token` chạy song song hoặc double-click nút Đăng nhập là gặp ngay.
+  Đã thêm `jwtid: randomUUID()` trong `JWTService.generateRefreshToken` — 3 login song song trả 200 với 3 cookie khác
+  nhau, refresh/logout vẫn thu hồi đúng.
+- Auth (fix): bấm Đăng ký trên `http://localhost:3000` báo network error vì `lib/axios/config.ts` có fallback cứng
+  `http://localhost:8080/api/v1` (repo không có `frontend/.env`), mà 8080 trên máy này do container nginx của project
+  khác (`woker-rent-gateway`) chiếm — preflight trả 204 không có `Access-Control-Allow-Origin` nên trình duyệt chặn.
+  Fallback đổi thành `/api/v1` (đi qua proxy Vite, hết CORS), proxy đọc port backend từ `BACKEND_PORT` (mặc định 8080),
+  và `frontend/.env.local` (đã gitignore) đặt `BACKEND_PORT=8090` theo `PORT` trong `backend/.env`.
+- Auth: trang `/verify-email` (6 ô nhập mã) không khớp contract. Email gửi link `?token=<token ký random>`; page đọc
+  `token` rồi làm `token.slice(0, 6).replace(/\D/g, '')` (`pages/auth/verify-email/index.tsx:32`) — với token kiểu đó
+  kết quả thường chỉ còn vài chữ số (link test ra `"0"`), và nút bị disable nên không xác thực được. Ngoài ra
+  `pages/auth/register/store.ts:25` điều hướng `/verify-email` **không kèm** `token` nên sau khi đăng ký cũng trống.
+  Backend `POST /auth/verify-email` chỉ nhận `token`, không có OTP 6 số. Cần chủ repo chốt: đổi page thành bấm link
+  verify tự động, hay thêm OTP 6 số vào backend. Ngoài phạm vi task đang làm, chưa sửa.
