@@ -193,11 +193,7 @@ Tuần 3: B08, F06, I03. Tuần 4: B09–B12, F07, I05–I08.
 - [ ] Trang `Dashboard`: số host, số phiên gần đây, nút "Kết nối nhanh" (dùng dữ liệu thật từ API, không dữ liệu giả).
 - **Nghiệm thu:** `pnpm build` sạch; điều hướng giữa các trang không lỗi console.
 
-### F02 (P0) Kiểu dữ liệu và service
-- [ ] `lib/types`: `Host`, `CreateHostRequest`, `UpdateHostRequest`, `TestHostResult`, `SessionLog`, `SftpEntry`.
-- [ ] `lib/services/hosts.service.ts` (list/get/create/update/delete/test/trustHostKey), `terminal.service.ts` (`createTicket(hostId)`),
-      `sessions.service.ts`, `sftp.service.ts` (sau B08); theo đúng mẫu `monitors.service.ts`.
-
+w
 ### F03 (P0) Trang Hosts
 - [ ] `pages/hosts/` theo mẫu `pages/monitors/`: `store.ts`, `hooks.ts`, `index.tsx`, `components/HostCard`, `HostModal`, `DeleteDialog`.
 - [ ] `HostModal` (react-hook-form + zod): name, hostname, port, username, authType (radio), secret (input password hoặc textarea cho private key
@@ -323,3 +319,10 @@ Tuần 3: B08, F06, I03. Tuần 4: B09–B12, F07, I05–I08.
 - Cổng 5432 trên máy dev đang bị tiến trình khác chiếm nên chưa chạy được db dev để nghiệm thu B06 qua Swagger;
   phần HTTP đã kiểm tra bằng script riêng: không Bearer → 401, host của mình → 201 + ticket 64 hex,
   host người khác → 404, body sai → 422.
+- F02: `monitors.service.ts` không còn trong frontend nên đã theo mẫu `hosts.service.ts`/`users.service.ts` đang có
+  (named async function + object `xxxService`, `http` từ `lib/axios`, type trong `lib/types`, re-export qua `lib/api.ts`).
+- F02: `sessions.service.ts` và type `SessionLog`/`SftpEntry` viết theo contract B07/B08 chưa implement
+  (`GET /sessions` trả `{ sessions: { entries, limit, offset, total_count } }` giống `/hosts`);
+  khi làm B07/B08 nhớ đối chiếu lại key envelope và field. `sftp.service.ts` chưa tạo, để sau B08.
+- F02: frontend không có script `type-check`/`test`; đã chạy `pnpm lint` và `pnpm build` sạch
+  (cảnh báo chunk > 500kB và comment của zod là có sẵn từ trước, không phải do F02).

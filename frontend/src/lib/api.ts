@@ -23,9 +23,17 @@ export type {
   Host,
   CreateHostRequest,
   UpdateHostRequest,
-  PaginatedHosts
+  PaginatedHosts,
+  SshErrorCode,
+  TestHostResult,
+  SessionLog,
+  PaginatedSessionLogs,
+  SftpEntryType,
+  SftpEntry
 } from './types'
 
 export { authService } from './services/auth.service'
 export { usersService } from './services/users.service'
 export { hostsService } from './services/hosts.service'
+export { terminalService } from './services/terminal.service'
+export { sessionsService } from './services/sessions.service'

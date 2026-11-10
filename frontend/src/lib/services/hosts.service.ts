@@ -1,5 +1,5 @@
 import { http } from '../axios'
-import type { CreateHostRequest, Host, PaginatedHosts, UpdateHostRequest } from '../types'
+import type { CreateHostRequest, Host, PaginatedHosts, TestHostResult, UpdateHostRequest } from '../types'
 
 // The axios interceptor already unwraps the `{ statusCode, message, data }` envelope.
 
@@ -27,4 +27,14 @@ export async function deleteHost(id: string): Promise<void> {
   await http.delete(`/hosts/${id}`)
 }
 
-export const hostsService = { getHosts, getHost, createHost, updateHost, deleteHost }
+export async function testHost(id: string): Promise<TestHostResult> {
+  const { data } = await http.post<TestHostResult>(`/hosts/${id}/test`)
+  return data
+}
+
+export async function trustHostKey(id: string, fingerprint: string): Promise<Host> {
+  const { data } = await http.post<{ host: Host }>(`/hosts/${id}/trust-host-key`, { fingerprint })
+  return data.host
+}
+
+export const hostsService = { getHosts, getHost, createHost, updateHost, deleteHost, testHost, trustHostKey }

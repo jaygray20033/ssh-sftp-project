@@ -142,3 +142,44 @@ export interface PaginatedHosts {
   offset: number
   total_count?: number
 }
+
+export type SshErrorCode =
+  'AUTH_FAILED' | 'TIMEOUT' | 'REFUSED' | 'HOST_KEY_CHANGED' | 'HOST_KEY_UNVERIFIED' | 'CONNECTION_FAILED'
+
+// A failed test still comes back as HTTP 200 with ok: false.
+export type TestHostResult =
+  | { ok: true; fingerprint: string | null; latencyMs: number }
+  | { ok: false; code: SshErrorCode; message: string; fingerprint?: string }
+
+// ─── Sessions ────────────────────────────────────────────────────────────────
+
+export interface SessionLog {
+  id: string
+  // null when the host was deleted after the session.
+  hostId: string | null
+  hostLabel: string
+  startedAt: string
+  endedAt: string | null
+  clientIp: string
+  closeReason: string | null
+}
+
+export interface PaginatedSessionLogs {
+  entries: SessionLog[]
+  limit: number
+  offset: number
+  total_count?: number
+}
+
+// ─── SFTP ────────────────────────────────────────────────────────────────────
+
+export type SftpEntryType = 'file' | 'directory' | 'symlink' | 'other'
+
+export interface SftpEntry {
+  name: string
+  type: SftpEntryType
+  size: number
+  modifiedAt: string
+  // Long format, e.g. drwxr-xr-x.
+  permissions: string
+}
