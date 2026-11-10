@@ -187,10 +187,10 @@ Tuần 3: B08, F06, I03. Tuần 4: B09–B12, F07, I05–I08.
 ## F — Frontend
 
 ### F01 (P0) Điều hướng và khung trang
-- [ ] `AppLayout` nav: Dashboard, **Hosts**, **Terminal**, **Files**, Cài đặt (bỏ Storage, Monitors tùy B09).
-- [ ] `App.tsx`: thêm route `/hosts`, `/terminal`, `/files/:hostId`, bọc `ProtectedRoute` + `AppLayout` như các trang hiện có; xóa `pages/storage` và
+- [x] `AppLayout` nav: Dashboard, **Hosts**, **Terminal**, **Files**, Cài đặt (bỏ Storage, Monitors tùy B09).
+- [x] `App.tsx`: thêm route `/hosts`, `/terminal`, `/files/:hostId`, bọc `ProtectedRoute` + `AppLayout` như các trang hiện có; xóa `pages/storage` và
       `storage.service.ts` sau khi F06 tái dùng xong (hoặc xóa luôn nếu chưa cần, rồi dựng mới ở F06).
-- [ ] Trang `Dashboard`: số host, số phiên gần đây, nút "Kết nối nhanh" (dùng dữ liệu thật từ API, không dữ liệu giả).
+- [x] Trang `Dashboard`: số host, số phiên gần đây, nút "Kết nối nhanh" (dùng dữ liệu thật từ API, không dữ liệu giả).
 - **Nghiệm thu:** `pnpm build` sạch; điều hướng giữa các trang không lỗi console.
 
 w
@@ -326,3 +326,13 @@ w
   khi làm B07/B08 nhớ đối chiếu lại key envelope và field. `sftp.service.ts` chưa tạo, để sau B08.
 - F02: frontend không có script `type-check`/`test`; đã chạy `pnpm lint` và `pnpm build` sạch
   (cảnh báo chunk > 500kB và comment của zod là có sẵn từ trước, không phải do F02).
+- F01: Docker daemon không chạy và cổng 5432 bị tiến trình khác chiếm nên không có backend thật; đã chạy UI với
+  mock API tạm (ngoài repo) theo đúng contract `/hosts`, `/hosts/:id/test`, `/hosts/:id/trust-host-key`,
+  `/terminal/tickets`, `/sessions`. Nghiệm thu thật cần chạy lại với `docker compose up`.
+- F01: `GET /sessions` chưa tồn tại (B07). Dashboard vẫn gọi thật với `retry: false` và hiển thị "Chưa khả dụng"
+  thay vì số giả; với backend thật sẽ có một log 404 trong DevTools cho tới khi B07 xong.
+- F01: thêm route `/files` (không có `hostId`) để mục Files trong nav có đích; `pages/files` hiện là khung chọn host
+  + trang chi tiết host theo contract B08, F06 sẽ thay bằng bảng SFTP thật (cần `sftp.service.ts`).
+- F01: nút "Kết nối" ở `HostCard` chuyển từ disabled sang `/terminal?host=<id>`; trang terminal nhận host từ query.
+- F01: trình duyệt tích hợp không mở được viewport (trả `0x0`) nên không chụp màn hình được; đã kiểm tra bằng snapshot
+  và DOM, chưa rà bằng mắt ở các breakpoint.

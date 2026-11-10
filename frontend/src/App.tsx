@@ -17,6 +17,8 @@ import CallbackPage from './pages/auth/callback'
 
 import DashboardPage from './pages/dashboard'
 import HostsPage from './pages/hosts'
+import TerminalPage from './pages/terminal'
+import FilesPage from './pages/files'
 import SettingsPage from './pages/settings'
 import NotFoundPage from './pages/not-found'
 
@@ -84,6 +86,36 @@ function App() {
             <ProtectedRoute>
               <AppLayout>
                 <HostsPage />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path='/terminal'
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <TerminalPage />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path='/files'
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <FilesPage />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path='/files/:hostId'
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <FilesPage />
               </AppLayout>
             </ProtectedRoute>
           }

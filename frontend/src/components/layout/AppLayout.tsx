@@ -1,12 +1,14 @@
-import type { ReactNode } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Server, Settings, LogOut } from 'lucide-react'
+import { useEffect, useState, type ReactNode } from 'react'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { LayoutDashboard, Server, SquareTerminal, FolderOpen, Settings, LogOut, Menu, X } from 'lucide-react'
 import { useAuthStore } from '@stores/authStore'
 
 const navItems = [
-  { to: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
-  { to: '/hosts', label: 'Hosts', icon: <Server size={18} /> },
-  { to: '/settings', label: 'Cài đặt', icon: <Settings size={18} /> }
+  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/hosts', label: 'Hosts', icon: Server },
+  { to: '/terminal', label: 'Terminal', icon: SquareTerminal },
+  { to: '/files', label: 'Files', icon: FolderOpen },
+  { to: '/settings', label: 'Cài đặt', icon: Settings }
 ]
 
 function getInitials(name: string) {
@@ -18,7 +20,23 @@ function getInitials(name: string) {
     .toUpperCase()
 }
 
-function Sidebar() {
+function Logo() {
+  return (
+    <div className='px-6 py-5 flex items-center gap-3' style={{ borderBottom: '2px solid var(--text)' }}>
+      <div
+        className='w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0'
+        style={{ background: 'var(--cta)', border: '2px solid var(--text)', boxShadow: '2px 2px 0 var(--text)' }}
+      >
+        S
+      </div>
+      <span className='font-extrabold text-base tracking-tight' style={{ color: 'var(--color-text)' }}>
+        ShellDeck
+      </span>
+    </div>
+  )
+}
+
+function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
 
@@ -28,33 +46,15 @@ function Sidebar() {
   }
 
   return (
-    <aside
-      className='fixed top-0 left-0 h-screen w-64 flex flex-col z-20'
-      style={{
-        background: 'var(--color-surface)',
-        borderRight: '3px solid var(--text)',
-        boxShadow: '4px 0 0 rgba(45,55,72,0.06)'
-      }}
-    >
-      {/* Logo */}
-      <div className='px-6 py-5 flex items-center gap-3' style={{ borderBottom: '2px solid var(--text)' }}>
-        <div
-          className='w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0'
-          style={{ background: 'var(--cta)', border: '2px solid var(--text)', boxShadow: '2px 2px 0 var(--text)' }}
-        >
-          S
-        </div>
-        <span className='font-extrabold text-base tracking-tight' style={{ color: 'var(--color-text)' }}>
-          ShellDeck
-        </span>
-      </div>
+    <>
+      <Logo />
 
-      {/* Nav */}
-      <nav className='flex-1 px-3 py-4 space-y-1'>
+      <nav className='flex-1 px-3 py-4 space-y-1 overflow-y-auto'>
         {navItems.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
+            onClick={onNavigate}
             className={({ isActive }) =>
               [
                 'flex items-center gap-3 px-3 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 cursor-pointer',
@@ -73,7 +73,7 @@ function Sidebar() {
                 : {}
             }
           >
-            {item.icon}
+            <item.icon size={18} />
             {item.label}
           </NavLink>
         ))}
@@ -121,16 +121,96 @@ function Sidebar() {
           Đăng xuất
         </button>
       </div>
-    </aside>
+    </>
   )
 }
 
 export function AppLayout({ children }: { children: ReactNode }) {
+  const [menuOpen, setMenuOpen] = useState(false)
+  const location = useLocation()
+
+  useEffect(() => {
+    setMenuOpen(false)
+  }, [location.pathname])
+
+  useEffect(() => {
+    if (!menuOpen) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMenuOpen(false)
+    }
+    document.addEventListener('keydown', onKeyDown)
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.removeEventListener('keydown', onKeyDown)
+      document.body.style.overflow = ''
+    }
+  }, [menuOpen])
+
   return (
-    <div className='flex min-h-screen'>
-      <Sidebar />
-      <main className='flex-1 pl-64 min-h-screen' style={{ background: 'inherit' }}>
-        <div className='max-w-5xl mx-auto px-8 py-8'>{children}</div>
+    <div className='min-h-screen'>
+      <aside
+        className='fixed top-0 left-0 h-screen w-64 hidden lg:flex flex-col z-20'
+        style={{
+          background: 'var(--color-surface)',
+          borderRight: '3px solid var(--text)',
+          boxShadow: '4px 0 0 rgba(45,55,72,0.06)'
+        }}
+      >
+        <SidebarContent />
+      </aside>
+
+      <header
+        className='lg:hidden sticky top-0 z-30 flex items-center justify-between px-4 py-3'
+        style={{ background: 'var(--color-surface)', borderBottom: '2px solid var(--text)' }}
+      >
+        <div className='flex items-center gap-2.5'>
+          <div
+            className='w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-xs'
+            style={{ background: 'var(--cta)', border: '2px solid var(--text)', boxShadow: '2px 2px 0 var(--text)' }}
+          >
+            S
+          </div>
+          <span className='font-extrabold text-sm' style={{ color: 'var(--color-text)' }}>
+            ShellDeck
+          </span>
+        </div>
+        <button
+          onClick={() => setMenuOpen(true)}
+          aria-label='Mở menu'
+          aria-expanded={menuOpen}
+          className='w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer'
+          style={{ background: 'var(--color-bg)', border: '1.5px solid var(--color-border)' }}
+        >
+          <Menu size={18} />
+        </button>
+      </header>
+
+      {menuOpen && (
+        <div className='lg:hidden fixed inset-0 z-40'>
+          <div
+            className='absolute inset-0'
+            style={{ background: 'rgba(45,55,72,0.45)', backdropFilter: 'blur(2px)' }}
+            onClick={() => setMenuOpen(false)}
+          />
+          <aside
+            className='absolute top-0 left-0 h-full w-72 max-w-[85vw] flex flex-col animate-confirm'
+            style={{ background: 'var(--color-surface)', borderRight: '3px solid var(--text)' }}
+          >
+            <button
+              onClick={() => setMenuOpen(false)}
+              aria-label='Đóng menu'
+              className='absolute top-4 right-3 w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer z-10'
+              style={{ color: 'var(--color-muted)' }}
+            >
+              <X size={18} />
+            </button>
+            <SidebarContent onNavigate={() => setMenuOpen(false)} />
+          </aside>
+        </div>
+      )}
+
+      <main className='lg:pl-64 min-h-screen'>
+        <div className='max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8'>{children}</div>
       </main>
     </div>
   )

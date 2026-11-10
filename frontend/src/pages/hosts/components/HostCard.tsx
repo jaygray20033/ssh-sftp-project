@@ -1,8 +1,10 @@
+import { useNavigate } from 'react-router-dom'
 import { KeyRound, Lock, Pencil, Trash2, Terminal } from 'lucide-react'
 import type { Host } from '@lib/types'
 import { useHosts } from '../hooks'
 
 export function HostCard({ host }: { host: Host }) {
+  const navigate = useNavigate()
   const { openEditModal, openDeleteDialog } = useHosts()
 
   return (
@@ -54,10 +56,9 @@ export function HostCard({ host }: { host: Host }) {
 
       <div className='flex items-center gap-2 shrink-0'>
         <button
-          disabled
-          title='Sắp có: terminal (task B06 / F04)'
-          className='px-3 py-2 rounded-xl text-xs font-bold text-white opacity-50 cursor-not-allowed'
-          style={{ background: 'var(--cta)' }}
+          onClick={() => navigate(`/terminal?host=${host.id}`)}
+          className='px-3 py-2 rounded-xl text-xs font-bold text-white cursor-pointer transition-all duration-150'
+          style={{ background: 'var(--cta)', border: '1.5px solid var(--text)', boxShadow: '2px 2px 0 var(--text)' }}
         >
           Kết nối
         </button>
