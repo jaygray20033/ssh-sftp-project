@@ -68,46 +68,46 @@ Tuần 3: B08, F06, I03. Tuần 4: B09–B12, F07, I05–I08.
 ## B — Backend
 
 ### B01 (P0) Dịch vụ mã hóa credential
-- [ ] Biến môi trường `ENCRYPTION_KEY` (base64 của đúng 32 byte): khai báo trong `env.ts` (zod: giải mã base64, kiểm tra độ dài 32) và `.env.example`.
-- [ ] `src/common/services/crypto.service.ts`: `encrypt(plain: string): string` và `decrypt(payload: string): string`,
+- [x] Biến môi trường `ENCRYPTION_KEY` (base64 của đúng 32 byte): khai báo trong `env.ts` (zod: giải mã base64, kiểm tra độ dài 32) và `.env.example`.
+- [x] `src/common/services/crypto.service.ts`: `encrypt(plain: string): string` và `decrypt(payload: string): string`,
       AES-256-GCM, IV 12 byte ngẫu nhiên mỗi lần, định dạng lưu `v1:<iv_b64>:<tag_b64>:<cipher_b64>`; xuất ở `common/services/index.ts`.
-- [ ] `decrypt` ném lỗi rõ ràng khi sai khóa, sai định dạng, hoặc dữ liệu bị sửa (auth tag không khớp).
-- [ ] Unit test (`crypto.service.test.ts`): round-trip, hai lần mã hóa cùng input ra kết quả khác nhau, sửa 1 byte thì decrypt thất bại, sai khóa thất bại, chuỗi unicode/tiếng Việt.
+- [x] `decrypt` ném lỗi rõ ràng khi sai khóa, sai định dạng, hoặc dữ liệu bị sửa (auth tag không khớp).
+- [x] Unit test (`crypto.service.test.ts`): round-trip, hai lần mã hóa cùng input ra kết quả khác nhau, sửa 1 byte thì decrypt thất bại, sai khóa thất bại, chuỗi unicode/tiếng Việt.
 - **Nghiệm thu:** test qua; không có log nào in ra plaintext hoặc khóa.
 
 ### B02 (P0) Entity `Host` và migration
-- [ ] `src/databases/entities/host.entity.ts` (kế thừa `BaseEntity`, bảng `hosts`):
+- [x] `src/databases/entities/host.entity.ts` (kế thừa `BaseEntity`, bảng `hosts`):
       `name` varchar(100), `hostname` varchar(255), `port` int mặc định 22, `username` varchar(100),
       `authType` enum `password | private_key`, `encryptedSecret` text, `encryptedPassphrase` text nullable,
       `hostKeyFingerprint` varchar(100) nullable (dạng `SHA256:...`), `tags` simple-array nullable,
       `lastConnectedAt` timestamp nullable, `userId` uuid + quan hệ `ManyToOne(User, onDelete CASCADE)`.
-- [ ] Ràng buộc unique `(userId, name)`; index theo `userId`.
-- [ ] Hằng số `AuthType` trong `src/common/constants/host.constant.ts`, theo kiểu `monitor.constant.ts`.
-- [ ] Đăng ký entity trong data source; sinh migration `AddHostsTable` bằng `pnpm migration:generate`, kiểm tra tay file sinh ra.
+- [x] Ràng buộc unique `(userId, name)`; index theo `userId`.
+- [x] Hằng số `AuthType` trong `src/common/constants/host.constant.ts`, theo kiểu `monitor.constant.ts`.
+- [x] Đăng ký entity trong data source; sinh migration `AddHostsTable` bằng `pnpm migration:generate`, kiểm tra tay file sinh ra.
 - **Nghiệm thu:** `pnpm migration:run` tạo bảng; `pnpm migration:revert` hoàn tác sạch.
 
 ### B03 (P0) Module `hosts` (CRUD)
-- [ ] `src/modules/hosts/`: route, controller, service, repository, `dto/` (zod) theo mẫu `monitor`.
-- [ ] DTO tạo: `name` (1–100), `hostname` (hostname hoặc IP hợp lệ), `port` (1–65535), `username`, `authType`,
+- [x] `src/modules/hosts/`: route, controller, service, repository, `dto/` (zod) theo mẫu `monitor`.
+- [x] DTO tạo: `name` (1–100), `hostname` (hostname hoặc IP hợp lệ), `port` (1–65535), `username`, `authType`,
       `secret` (password hoặc nội dung private key PEM, tối đa 16KB), `passphrase` tùy chọn, `tags` (≤10 tag, mỗi tag ≤30 ký tự).
       DTO sửa: tất cả tùy chọn; không gửi `secret` thì giữ nguyên bản cũ.
-- [ ] Service mã hóa `secret`/`passphrase` bằng CryptoService trước khi lưu.
-- [ ] Response chỉ gồm: id, name, hostname, port, username, authType, tags, `hasSecret`, `hasPassphrase`,
+- [x] Service mã hóa `secret`/`passphrase` bằng CryptoService trước khi lưu.
+- [x] Response chỉ gồm: id, name, hostname, port, username, authType, tags, `hasSecret`, `hasPassphrase`,
       `hostKeyFingerprint`, `lastConnectedAt`, createdAt, updatedAt. **Tuyệt đối không có secret.**
-- [ ] Endpoints: `GET /hosts` (phân trang, `search`, `tag`), `GET /hosts/:id`, `POST /hosts`, `PATCH /hosts/:id`, `DELETE /hosts/:id`.
+- [x] Endpoints: `GET /hosts` (phân trang, `search`, `tag`), `GET /hosts/:id`, `POST /hosts`, `PATCH /hosts/:id`, `DELETE /hosts/:id`.
       Mọi truy vấn lọc theo `req.user!.id`; host của người khác trả 404.
-- [ ] Mount `/hosts` trong `modules/index.ts` (sau authenticate); đăng ký schema OpenAPI giống cách module monitor đã làm trong `src/docs`.
-- [ ] Test: tạo/sửa/xóa, user B không đọc/sửa/xóa được host của user A, response không chứa field secret.
+- [x] Mount `/hosts` trong `modules/index.ts` (sau authenticate); đăng ký schema OpenAPI giống cách module monitor đã làm trong `src/docs`.
+- [x] Test: tạo/sửa/xóa, user B không đọc/sửa/xóa được host của user A, response không chứa field secret.
 - **Nghiệm thu:** thao tác được qua Swagger; kiểm tra DB thấy `encrypted_secret` bắt đầu bằng `v1:`.
 
 ### B04 (P0) Chặn kết nối nguy hiểm (SSRF guard) và validate đích
-- [ ] Biến `ALLOW_PRIVATE_HOSTS` (mặc định `false`) và `ALLOWED_HOSTS` (danh sách phân tách dấu phẩy, tùy chọn) trong `env.ts` + `.env.example`.
-- [ ] `src/common/utils/network-guard.ts`: `assertHostAllowed(hostname)` — resolve DNS (cả A/AAAA), từ chối loopback,
+- [x] Biến `ALLOW_PRIVATE_HOSTS` (mặc định `false`) và `ALLOWED_HOSTS` (danh sách phân tách dấu phẩy, tùy chọn) trong `env.ts` + `.env.example`.
+- [x] `src/common/utils/network-guard.ts`: `assertHostAllowed(hostname)` — resolve DNS (cả A/AAAA), từ chối loopback,
       private (10/8, 172.16/12, 192.168/16), link-local (169.254/16, đặc biệt 169.254.169.254), `fc00::/7`, `::1`, `0.0.0.0`
       khi `ALLOW_PRIVATE_HOSTS=false`; nếu `ALLOWED_HOSTS` có giá trị thì chỉ cho phép host trong danh sách.
-- [ ] Gọi guard khi tạo/sửa host và **ngay trước mỗi lần kết nối** (chống DNS rebinding: dùng IP đã resolve để kết nối).
-- [ ] Unit test các dải IP trên, IPv6, hostname phân giải ra IP nội bộ.
-- [ ] README/docs ghi rõ: self-host trong LAN thì đặt `ALLOW_PRIVATE_HOSTS=true`; `docker-compose.dev.yml` bật biến này.
+- [x] Gọi guard khi tạo/sửa host và **ngay trước mỗi lần kết nối** (chống DNS rebinding: dùng IP đã resolve để kết nối).
+- [x] Unit test các dải IP trên, IPv6, hostname phân giải ra IP nội bộ.
+- [x] README/docs ghi rõ: self-host trong LAN thì đặt `ALLOW_PRIVATE_HOSTS=true`; `docker-compose.dev.yml` bật biến này.
 - **Nghiệm thu:** tạo host `127.0.0.1` bị từ chối khi `false`, được phép khi `true`.
 
 ### B05 (P0) SSH service và kiểm tra kết nối
@@ -142,22 +142,22 @@ Tuần 3: B08, F06, I03. Tuần 4: B09–B12, F07, I05–I08.
       Đã chạy thật với sshd dev (xem Ghi chú cuối file).
 
 ### B07 (P0) Nhật ký phiên (audit)
-- [ ] Entity `SessionLog` (`session_logs`): userId, hostId (nullable khi host bị xóa, `SET NULL`), `hostLabel` (tên host lúc kết nối),
+- [x] Entity `SessionLog` (`session_logs`): userId, hostId (nullable khi host bị xóa, `SET NULL`), `hostLabel` (tên host lúc kết nối),
       `startedAt`, `endedAt`, `clientIp`, `closeReason`; migration mới.
-- [ ] Ghi khi phiên mở và đóng (kể cả đóng do lỗi/timeout). **Không ghi nội dung gõ hay output.**
-- [ ] `GET /sessions` (phân trang, của chính user); xóa log cũ hơn `SESSION_LOG_RETENTION_DAYS` (mặc định 90) bằng job định kỳ.
+- [x] Ghi khi phiên mở và đóng (kể cả đóng do lỗi/timeout). **Không ghi nội dung gõ hay output.**
+- [x] `GET /sessions` (phân trang, của chính user); xóa log cũ hơn `SESSION_LOG_RETENTION_DAYS` (mặc định 90) bằng job định kỳ.
 - **Nghiệm thu:** mở/đóng 2 phiên thì `GET /sessions` thấy 2 bản ghi có thời lượng đúng.
 
 ### B08 (P0 → làm sau tuần 2) Module SFTP
-- [ ] `src/modules/sftp/`, mount dưới `/hosts/:id/sftp` (kiểm tra sở hữu host như B03; dùng `ssh.service` + `client.sftp()`).
-- [ ] Endpoints: `GET .../list?path=` (trả tên, loại, kích thước, mtime, quyền; thư mục trước, sắp xếp theo tên),
+- [x] `src/modules/sftp/`, mount dưới `/hosts/:id/sftp` (kiểm tra sở hữu host như B03; dùng `ssh.service` + `client.sftp()`).
+- [x] Endpoints: `GET .../list?path=` (trả tên, loại, kích thước, mtime, quyền; thư mục trước, sắp xếp theo tên),
       `GET .../download?path=` (stream, `Content-Disposition`), `POST .../upload?path=` (multipart, giới hạn `SFTP_MAX_UPLOAD_MB` mặc định 100,
       ghi tạm rồi stream lên SFTP, luôn xóa file tạm), `PATCH .../rename` `{from,to}`, `DELETE .../?path=&recursive=`, `POST .../mkdir`.
-- [ ] Chuẩn hóa đường dẫn POSIX: từ chối chuỗi chứa byte NUL; dùng `path.posix.normalize`; đường dẫn tương đối tính từ home của user SSH.
-- [ ] Từ chối nếu host chưa có `hostKeyFingerprint` (báo `HOST_KEY_UNVERIFIED`, hướng dẫn kết nối terminal hoặc test trước).
-- [ ] Đóng kết nối SSH sau mỗi request, hoặc cache ngắn (≤60 giây) theo `(userId, hostId)` và đóng khi idle.
-- [ ] Lỗi map rõ: `ENOENT` → 404, `EACCES` → 403, còn lại 502; không lộ stack trace.
-- [ ] Test util chuẩn hóa đường dẫn; thử tay với sshd dev (upload/download file ≥ 20MB đúng checksum).
+- [x] Chuẩn hóa đường dẫn POSIX: từ chối chuỗi chứa byte NUL; dùng `path.posix.normalize`; đường dẫn tương đối tính từ home của user SSH.
+- [x] Từ chối nếu host chưa có `hostKeyFingerprint` (báo `HOST_KEY_UNVERIFIED`, hướng dẫn kết nối terminal hoặc test trước).
+- [x] Đóng kết nối SSH sau mỗi request, hoặc cache ngắn (≤60 giây) theo `(userId, hostId)` và đóng khi idle.
+- [x] Lỗi map rõ: `ENOENT` → 404, `EACCES` → 403, còn lại 502; không lộ stack trace.
+- [x] Test util chuẩn hóa đường dẫn; thử tay với sshd dev (upload/download file ≥ 20MB đúng checksum).
 - **Nghiệm thu:** toàn bộ thao tác chạy được qua Swagger/curl; checksum file tải về khớp.
 
 ### B09 (P1) Sức khỏe host (tái sử dụng module monitor)
@@ -305,6 +305,14 @@ w
 
 ## Ghi chú (Claude Code ghi vào đây khi gặp vấn đề ngoài phạm vi)
 
+- B01/B02: mã hóa credential và entity `Host` + migration đã có sẵn trong zip; đã rà lại theo checklist và nghiệm thu thật:
+  `pnpm test` 34/34 pass (5 test crypto), type-check + lint sạch, dựng postgres 17 tạm (cổng 5433) rồi
+  `pnpm migration:run` tạo bảng `hosts` đúng cột/unique/index/FK CASCADE và `pnpm migration:revert` hoàn tác sạch
+  (cả bảng lẫn type enum biến mất); chạy lại `migration:generate` trên DB đã revert cho ra SQL giống hệt
+  `AddHostsTable` → entity khớp 1:1 migration. Postgres tạm đã xóa.
+- B02: sửa lỗi `pnpm migration:run` báo `Cannot find module 'ts-node'` (ghi nhận ở note F04 dưới đây) bằng cách
+  thêm `ts-node` vào devDependencies — các script migration giờ chạy được thật, không cần workaround AUTO_MIGRATE.
+
 - LICENSE và README còn placeholder: `<TODO: full name of the author>` trong LICENSE, `OWNER` trong badge/URL clone của README. Cần điền thật.
 - Compose, Dockerfile và `.env.example` nằm trong `infra/docker/` (theo yêu cầu của chủ repo, không để ngoài root).
 - Nghiệm thu S04 (`migration:run` + đăng nhập Swagger + `ssh -p 2222`) cần Docker daemon chạy thật; chưa kiểm tra được trong môi trường tạo repo.
@@ -315,7 +323,7 @@ w
   Container sshd dev vẫn đang chạy, tắt bằng `cd infra/docker && docker compose -f docker-compose.dev.yml stop sshd`.
 - Dùng `wscat` phải gửi kèm Origin, nếu không gateway đóng 4401:
   `wscat -H "Origin: http://localhost:3000" -c "ws://localhost:8080/api/v1/terminal/ws?ticket=<ticket>"`.
-- Terminal chưa ghi audit log (để B07) và chưa cập nhật `hosts.lastConnectedAt` (hiện chỉ `/hosts/:id/test` cập nhật).
+- Terminal chưa cập nhật `hosts.lastConnectedAt` khi mở phiên thật (hiện chỉ `/hosts/:id/test` cập nhật) — có thể gom vào B09.
 - Cổng 5432 trên máy dev đang bị tiến trình khác chiếm nên chưa chạy được db dev để nghiệm thu B06 qua Swagger;
   phần HTTP đã kiểm tra bằng script riêng: không Bearer → 401, host của mình → 201 + ticket 64 hex,
   host người khác → 404, body sai → 422.
@@ -376,6 +384,33 @@ w
   khác (`woker-rent-gateway`) chiếm — preflight trả 204 không có `Access-Control-Allow-Origin` nên trình duyệt chặn.
   Fallback đổi thành `/api/v1` (đi qua proxy Vite, hết CORS), proxy đọc port backend từ `BACKEND_PORT` (mặc định 8080),
   và `frontend/.env.local` (đã gitignore) đặt `BACKEND_PORT=8090` theo `PORT` trong `backend/.env`.
+- B03: code có sẵn trong zip, đã rà theo checklist và thêm test `host.service.test.ts` (14 test pass, mock repository +
+  CryptoService thật): mã hóa secret/passphrase thành `v1:...` trước khi lưu, response không bao giờ chứa secret,
+  user B đọc/sửa/xóa host của user A → 404, không gửi `secret` khi PATCH thì giữ nguyên bản cũ, đổi hostname/port thì
+  xóa `hostKeyFingerprint` (đổi port cũng xóa vì server identity đổi — lưu ý nếu thấy kỳ thì chỉnh lại).
+- B04: `src/common/utils/network-guard.ts` chặn loopback/private (10/8, 172.16/12, 192.168/16, CGNAT 100.64/10),
+  link-local (169.254.169.254), multicast/broadcast, `fc00::/7`, `fe80::/10`, `::1`, `::`, IPv4-mapped IPv6
+  (`::ffff:127.0.0.1` coi như IPv4 thường); `ALLOWED_HOSTS` set thì ưu tiên allowlist; `ALLOW_PRIVATE_HOSTS=true` bỏ qua.
+  Chống DNS rebinding: `SshService.connect` resolve DNS trước rồi **connect tới IP** đã resolve. Guard chạy khi
+  tạo/sửa host và trước mọi lần connect (terminal, test, SFTP). 18 test pass. Lưu ý: regex hextet IPv6 phải là
+  `/^fe[89ab][0-9a-f]:/` (không phải `{2}`) — lỗi đã sửa.
+- B07: entity + migration `1780000001000-AddSessionLogsTable` (verify run/revert trên postgres 17 tạm cổng 5433, đã xóa:
+  run tạo bảng đúng cột, FK CASCADE/SET NULL, 2 index; revert sạch). `GET /sessions` trả envelope
+  `{ sessions: { entries, limit, offset, total_count } }` khớp frontend `sessions.service.ts`. Job retention chạy hourly,
+  đọc `SESSION_LOG_RETENTION_DAYS` (default 90). Terminal ghi log khi SSH ready (kể cả case đã closed trước khi log kịp mở)
+  và đóng log với mọi close reason; `clientIp` lấy từ `req.socket.remoteAddress` ở gateway. 5 test service + 14 test gateway pass.
+  Migration `migration:generate` chỉ khác tên FK constraint (TypeORM hash tên) so với bản viết tay, semantics y hệt — không phải drift.
+- B08: module `sftp/` mount qua `router.use(SftpRoute)` trong `host.route.ts` (route định nghĩa full path `/:id/sftp/*`).
+  Path util: relative-to-home, chặn NUL/`..` chui lên/absolute; 7 test pass. Connection pool per `(userId, hostId)`,
+  idle 60s, sweeper 15s, đóng hết khi shutdown. Upload: multer 2.0.2 ghi temp rồi `fastPut`, **luôn** unlink temp file
+  kể cả lỗi. Host chưa trust fingerprint → `BadRequestError('HOST_KEY_UNVERIFIED: ...')` (400) để client hướng dẫn test trước.
+  Nghiệm thu bằng sshd thật (container `lscr.io/linuxserver/openssh-server`, cổng 2222, đã xóa): list/mkdir/upload 20MB
+  (temp deleted, 286–514ms)/download checksum SHA-256 khớp/rename/recursive delete — tất cả OK.
+  Lưu ý đã gặp: ssh2 SFTP errors dùng `code` **số** (2=NO_SUCH_FILE, 3=PERMISSION_DENIED) chứ không phải 'ENOENT' — mapper đã map cả hai.
+- Env mới (đã thêm vào `backend/.env.example`, `infra/docker/.env.example`, `docker-compose.yml`):
+  `ALLOW_PRIVATE_HOSTS`, `ALLOWED_HOSTS`, `SFTP_MAX_UPLOAD_MB`, `SESSION_LOG_RETENTION_DAYS`. `vitest.config.ts` đặt
+  `ALLOW_PRIVATE_HOSTS: 'true'` vì test connect loopback.
+- Tổng thể sau B03/B04/B07/B08: `pnpm lint` 0 lỗi 0 warning, `pnpm type-check` sạch, `pnpm test` 78/78 pass.
 - Auth: trang `/verify-email` (6 ô nhập mã) không khớp contract. Email gửi link `?token=<token ký random>`; page đọc
   `token` rồi làm `token.slice(0, 6).replace(/\D/g, '')` (`pages/auth/verify-email/index.tsx:32`) — với token kiểu đó
   kết quả thường chỉ còn vài chữ số (link test ra `"0"`), và nút bị disable nên không xác thực được. Ngoài ra

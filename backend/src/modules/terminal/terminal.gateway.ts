@@ -38,7 +38,7 @@ export const attachTerminalGateway = (server: Server): void => {
         ws.close(TerminalCloseCode.SESSION_LIMIT, 'Too many open sessions')
         return
       }
-      void new TerminalSession(ws, payload.userId, payload.hostId).start()
+      void new TerminalSession(ws, payload.userId, payload.hostId, req.socket.remoteAddress ?? 'unknown').start()
     })
   })
 

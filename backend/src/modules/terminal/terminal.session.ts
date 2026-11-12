@@ -19,6 +19,7 @@ import { NotFoundError } from '@common/errors'
 
 import HostService from '@modules/hosts/host.service'
 import SshService, { SshError } from '@modules/hosts/ssh.service'
+import SessionLogService from '@modules/sessions/session-log.service'
 
 import { Host } from '@entities/host.entity'
 
@@ -42,13 +43,15 @@ class TerminalSession {
   private pingTimer?: NodeJS.Timeout
   private hostKeyTimer?: NodeJS.Timeout
   private hostKeyPrompt?: { accept: () => void; cancel: () => void }
+  private sessionLogId?: string
   // A UTF-8 character can be split across two SSH packets.
   private readonly decoder = new StringDecoder('utf8')
 
   constructor(
     private readonly ws: WebSocket,
     private readonly userId: string,
-    private readonly hostId: string
+    private readonly hostId: string,
+    private readonly clientIp: string
   ) {}
 
   static countFor(userId: string): number {
@@ -92,6 +95,8 @@ class TerminalSession {
         this.close('SSH connection error', TerminalCloseCode.SERVER_ERROR)
       })
       client.on('close', () => this.close('SSH connection closed', TerminalCloseCode.NORMAL))
+
+      await this.openSessionLog(host)
       this.openShell(client)
     } catch (err) {
       this.onStartError(err)
@@ -186,6 +191,26 @@ class TerminalSession {
     }
   }
 
+  // Audit log entry, created once the SSH connection is ready.
+  private async openSessionLog(host: Host): Promise<void> {
+    try {
+      const log = await SessionLogService.open({
+        userId: this.userId,
+        hostId: host.id,
+        hostLabel: host.name,
+        clientIp: this.clientIp
+      })
+      this.sessionLogId = log.id
+      // close() may have already run while the SSH connection was being set up.
+      if (this.closed) {
+        await SessionLogService.close(log.id, 'Client disconnected')
+        this.sessionLogId = undefined
+      }
+    } catch (err) {
+      logger.warn({ userId: this.userId, hostId: this.hostId, err }, 'Could not write session audit log')
+    }
+  }
+
   private onStartError(err: unknown): void {
     if (this.closed) return
     if (err instanceof NotFoundError) {
@@ -258,6 +283,16 @@ class TerminalSession {
 
     this.send({ type: 'closed', reason })
     this.ws.close(code, reason)
+
+    // Close the audit log entry, whatever the reason was.
+    if (this.sessionLogId) {
+      const logId = this.sessionLogId
+      this.sessionLogId = undefined
+      void Promise.resolve(SessionLogService.close(logId, reason)).catch((err) => {
+        logger.warn({ userId: this.userId, logId, err }, 'Could not close session audit log')
+      })
+    }
+
     logger.info({ userId: this.userId, hostId: this.hostId, reason }, 'Terminal session closed')
   }
 }

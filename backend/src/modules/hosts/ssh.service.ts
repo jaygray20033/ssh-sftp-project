@@ -13,6 +13,7 @@ import {
 } from '@common/constants/host.constant'
 import { AppError } from '@common/errors'
 import { CryptoService } from '@common/services'
+import { resolveAllowedHostIp } from '@common/utils/network-guard'
 
 import { Host } from '@entities/host.entity'
 
@@ -60,7 +61,9 @@ const toSshError = (err: ConnectError): SshError => {
 
 class SshService {
   // Credentials are decrypted here, right before connecting, and never stored.
-  static connect(host: Host): Promise<Client> {
+  static async connect(host: Host): Promise<Client> {
+    // Resolve now and connect to the IP: blocks SSRF targets and DNS rebinding.
+    const targetIp = await resolveAllowedHostIp(host.hostname)
     return new Promise((resolve, reject) => {
       const client = new Client()
       let hostKeyError: SshError | undefined
@@ -84,7 +87,7 @@ class SshService {
         }
 
         client.connect({
-          host: host.hostname,
+          host: targetIp,
           port: host.port,
           username: host.username,
           password: isPassword ? secret : undefined,

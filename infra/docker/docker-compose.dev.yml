@@ -8,6 +8,10 @@
 
 name: shelldeck-dev
 
+# The API runs on the host during development (backend/.env).
+# Set ALLOW_PRIVATE_HOSTS=true there so the SSRF guard lets you connect
+# to this dev SSH server on 127.0.0.1:2222.
+
 services:
   db:
     image: postgres:17-alpine

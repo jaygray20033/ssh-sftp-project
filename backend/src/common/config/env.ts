@@ -38,6 +38,22 @@ const securityEnvSchema = z.object({
     .refine((v) => Buffer.from(v, 'base64').length === 32, 'ENCRYPTION_KEY must be base64 of exactly 32 bytes')
 })
 
+// SSRF guard for SSH targets (see src/common/utils/network-guard.ts).
+const networkEnvSchema = z.object({
+  // Set true when self-hosting inside a LAN: allows private/loopback SSH targets.
+  ALLOW_PRIVATE_HOSTS: z.stringbool().default(false),
+  // Comma-separated hostnames. When set, ONLY these hosts may be connected to.
+  ALLOWED_HOSTS: z
+    .string()
+    .default('')
+    .transform((val) =>
+      val
+        .split(',')
+        .map((host) => host.trim())
+        .filter(Boolean)
+    )
+})
+
 const authEnvSchema = z.object({
   JWT_SECRET: z.string().min(32),
   JWT_REFRESH_SECRET: z.string().min(32),
@@ -89,15 +105,28 @@ const terminalEnvSchema = z.object({
   SESSION_IDLE_TIMEOUT_MIN: z.coerce.number().int().positive().default(30)
 })
 
+const sftpEnvSchema = z.object({
+  // Max upload size for SFTP transfers.
+  SFTP_MAX_UPLOAD_MB: z.coerce.number().int().positive().default(100)
+})
+
+const sessionEnvSchema = z.object({
+  // Audit logs older than this are deleted by the retention job.
+  SESSION_LOG_RETENTION_DAYS: z.coerce.number().int().positive().default(90)
+})
+
 const envSchema = z.object({
   ...serverEnvSchema.shape,
   ...databaseEnvSchema.shape,
   ...securityEnvSchema.shape,
+  ...networkEnvSchema.shape,
   ...authEnvSchema.shape,
   ...googleEnvSchema.shape,
   ...emailEnvSchema.shape,
   ...appEnvSchema.shape,
-  ...terminalEnvSchema.shape
+  ...terminalEnvSchema.shape,
+  ...sftpEnvSchema.shape,
+  ...sessionEnvSchema.shape
 })
 
 type ParsedEnv = z.infer<typeof envSchema>

@@ -26,7 +26,9 @@ export default defineConfig({
       JWT_SECRET: 'x'.repeat(32),
       JWT_REFRESH_SECRET: 'y'.repeat(32),
       REFRESH_TOKEN_HASH_SECRET: 'z'.repeat(32),
-      AUTH_TOKEN_HASH_SECRET: 'w'.repeat(32)
+      AUTH_TOKEN_HASH_SECRET: 'w'.repeat(32),
+      // Tests connect to a loopback SSH server.
+      ALLOW_PRIVATE_HOSTS: 'true'
     }
   }
 })

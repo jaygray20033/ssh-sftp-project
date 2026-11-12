@@ -7,7 +7,7 @@
 
 ShellDeck là ứng dụng web mã nguồn mở để dùng **SSH và SFTP ngay trong trình duyệt**, thay thế cho bộ đôi PuTTY + WinSCP. Bạn tự triển khai (self-host) bằng Docker, lưu danh sách máy chủ của mình, mở nhiều terminal và quản lý file trên cùng một giao diện.
 
-> **Trạng thái:** khung dự án đã có tài khoản (đăng ký, đăng nhập, 2FA, Google tuỳ chọn), quản lý hosts với credential mã hoá, Docker + Nginx, CI. Terminal và SFTP là các tính năng tiếp theo.
+> **Trạng thái:** khung dự án đã có tài khoản (đăng ký, đăng nhập, 2FA, Google tuỳ chọn), quản lý hosts với credential mã hoá, terminal SSH nhiều tab với xác minh host key, SFTP, nhật ký phiên, Docker + Nginx, CI.
 
 ## ShellDeck là gì / không là gì
 
@@ -21,9 +21,23 @@ ShellDeck là ứng dụng web mã nguồn mở để dùng **SSH và SFTP ngay 
 
 - [x] Tài khoản: đăng ký, đăng nhập, xác minh email, quên mật khẩu, 2FA, Google OAuth (tuỳ chọn)
 - [x] Quản lý máy chủ (hosts): mật khẩu hoặc khóa riêng, mã hóa khi lưu, không bao giờ trả secret qua API
-- [ ] Terminal SSH nhiều tab (xterm.js + WebSocket), xác minh host key
-- [ ] SFTP: duyệt, tải lên, tải xuống, đổi tên, xóa
-- [ ] Nhật ký phiên SSH
+- [x] Terminal SSH nhiều tab (xterm.js + WebSocket), xác minh host key
+- [x] SFTP: duyệt, tải lên, tải xuống, đổi tên, xóa
+- [x] Nhật ký phiên SSH (mặc định không ghi nội dung gõ)
+
+### Chặn kết nối nội bộ (SSRF guard)
+
+Mặc định API **từ chối** các đích SSH nội bộ: loopback (`127.0.0.1`, `::1`), dải riêng (`10/8`, `172.16/12`, `192.168/16`),
+link-local (kể cả `169.254.169.254` — metadata endpoint của cloud), `fc00::/7`, `0.0.0.0`. Lý do: ngăn SSRF.
+Nếu bạn **self-host trong LAN** và muốn kết nối tới các máy nội bộ, đặt trong `.env`:
+
+```env
+ALLOW_PRIVATE_HOSTS=true
+# Hoặc chặt hơn: chỉ cho phép một danh sách máy cụ thể
+ALLOWED_HOSTS=server1.lan,192.168.1.10
+```
+
+Chế độ dev (`docker-compose.dev.yml`) dùng SSH server ở `127.0.0.1:2222` nên cần `ALLOW_PRIVATE_HOSTS=true` trong `backend/.env`.
 
 ## Bắt đầu nhanh (Docker)
 
@@ -71,7 +85,7 @@ Xem [docs/architecture.md](docs/architecture.md), [docs/deploy.md](docs/deploy.m
 
 ShellDeck is an open-source web app for **SSH and SFTP in your browser**, a self-hosted alternative to PuTTY + WinSCP. Save your servers, open several terminals and manage files from one interface.
 
-> **Status:** the skeleton ships accounts (register, login, 2FA, optional Google), host management with encrypted credentials, Docker + Nginx and CI. Terminal and SFTP come next.
+> **Status:** the skeleton ships accounts (register, login, 2FA, optional Google), host management with encrypted credentials, SSH terminals with host-key verification, SFTP, session audit logs, Docker + Nginx and CI.
 
 ### What it is / is not
 
@@ -95,6 +109,22 @@ Open <http://localhost>. API health: <http://localhost/api/v1/health>.
 ### Development
 
 See [docs/development.md](docs/development.md) and [CONTRIBUTING](.github/CONTRIBUTING.md).
+
+### Private-network guard (SSRF)
+
+By default the API **rejects** private SSH targets: loopback (`127.0.0.1`, `::1`), private ranges
+(`10/8`, `172.16/12`, `192.168/16`), link-local (including `169.254.169.254` — the cloud metadata endpoint),
+`fc00::/7`, `0.0.0.0`. This prevents SSRF. If you **self-host inside a LAN** and need to reach local machines,
+set in your `.env`:
+
+```env
+ALLOW_PRIVATE_HOSTS=true
+# Or stricter: only allow specific hosts
+ALLOWED_HOSTS=server1.lan,192.168.1.10
+```
+
+The dev compose (`docker-compose.dev.yml`) runs an SSH server on `127.0.0.1:2222`, so `ALLOW_PRIVATE_HOSTS=true`
+is required in `backend/.env` while developing.
 
 ### License
 

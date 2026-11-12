@@ -3,6 +3,8 @@ import 'dotenv/config'
 import env from '@common/config/env'
 import logger from '@common/config/logger'
 
+import { startSessionLogRetentionJob } from '@modules/sessions/session-log.job'
+import SftpService from '@modules/sftp/sftp.service'
 import { attachTerminalGateway, closeTerminalGateway } from '@modules/terminal/terminal.gateway'
 
 import AppDataSource from '@databases/data-source'
@@ -22,11 +24,14 @@ const bootstrap = async () => {
   })
 
   attachTerminalGateway(server)
+  const stopSessionLogRetentionJob = startSessionLogRetentionJob()
 
   const gracefulShutdown = async (signal: string) => {
     logger.info(`${signal} received. Shutting down gracefully...`)
 
+    stopSessionLogRetentionJob()
     await closeTerminalGateway()
+    SftpService.closeAll()
 
     server.close(async () => {
       try {

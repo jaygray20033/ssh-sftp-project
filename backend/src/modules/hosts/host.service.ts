@@ -2,6 +2,7 @@ import { AuthType } from '@common/constants/host.constant'
 import { BadRequestError, ConflictError, NotFoundError } from '@common/errors'
 import { CryptoService } from '@common/services'
 import { Paginated } from '@common/types'
+import { assertHostAllowed } from '@common/utils/network-guard'
 
 import { Host } from '@entities/host.entity'
 
@@ -22,6 +23,7 @@ class HostService {
 
   static async createHost(dto: CreateHostBody, userId: string): Promise<HostResponse> {
     await this.assertNameAvailable(userId, dto.name)
+    await assertHostAllowed(dto.hostname)
 
     const host = await HostRepository.create({
       name: dto.name,
@@ -41,6 +43,7 @@ class HostService {
   static async updateHost(id: string, userId: string, dto: UpdateHostBody): Promise<HostResponse> {
     const current = await this.getOwnedHost(id, userId)
     if (dto.name && dto.name !== current.name) await this.assertNameAvailable(userId, dto.name)
+    if (dto.hostname !== undefined && dto.hostname !== current.hostname) await assertHostAllowed(dto.hostname)
 
     const data: Partial<Host> = {}
     if (dto.name !== undefined) data.name = dto.name

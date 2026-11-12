@@ -25,6 +25,9 @@ import type { AddressInfo } from 'node:net'
 vi.mock('@common/services', () => ({ CryptoService: { decrypt: (value: string) => value } }))
 vi.mock('@modules/hosts/host.repository', () => ({ default: { update: vi.fn() } }))
 vi.mock('@modules/hosts/host.service', () => ({ default: { getOwnedHost: vi.fn(), trustHostKey: vi.fn() } }))
+vi.mock('@modules/sessions/session-log.service', () => ({
+  default: { open: vi.fn(async () => ({ id: 'log-1' })), close: vi.fn(async () => {}) }
+}))
 
 const ORIGIN = 'http://localhost:3000'
 const USER_ID = 'user-1'

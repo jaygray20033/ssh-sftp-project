@@ -6,6 +6,8 @@ import './extend-zod'
 import './schemas/auth.schema'
 import './schemas/user.schema'
 import './schemas/host.schema'
+import './schemas/session.schema'
+import './schemas/sftp.schema'
 import './schemas/terminal.schema'
 
 export function buildOpenAPIDocument() {
