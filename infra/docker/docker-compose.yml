@@ -65,8 +65,15 @@ services:
       # SSRF guard: leave false unless self-hosting inside a LAN
       ALLOW_PRIVATE_HOSTS: ${ALLOW_PRIVATE_HOSTS:-false}
       ALLOWED_HOSTS: ${ALLOWED_HOSTS:-}
+      HOST_HEALTH_CHECK_INTERVAL_SEC: ${HOST_HEALTH_CHECK_INTERVAL_SEC:-60}
+      RECORDINGS_DIR: ${RECORDINGS_DIR:-recordings}
+      RECORDING_MAX_SIZE_MB: ${RECORDING_MAX_SIZE_MB:-20}
+      RECORDING_RETENTION_DAYS: ${RECORDING_RETENTION_DAYS:-7}
       SFTP_MAX_UPLOAD_MB: ${SFTP_MAX_UPLOAD_MB:-100}
       SESSION_LOG_RETENTION_DAYS: ${SESSION_LOG_RETENTION_DAYS:-90}
+    volumes:
+      # Keep session recordings across container rebuilds.
+      - shelldeck-recordings:/app/${RECORDINGS_DIR:-recordings}
     depends_on:
       db:
         condition: service_healthy
@@ -89,3 +96,4 @@ services:
 
 volumes:
   shelldeck-db:
+  shelldeck-recordings:

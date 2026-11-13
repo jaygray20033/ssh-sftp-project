@@ -8,6 +8,7 @@ import './schemas/user.schema'
 import './schemas/host.schema'
 import './schemas/session.schema'
 import './schemas/sftp.schema'
+import './schemas/snippet.schema'
 import './schemas/terminal.schema'
 
 export function buildOpenAPIDocument() {

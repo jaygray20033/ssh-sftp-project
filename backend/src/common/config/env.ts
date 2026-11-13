@@ -105,6 +105,20 @@ const terminalEnvSchema = z.object({
   SESSION_IDLE_TIMEOUT_MIN: z.coerce.number().int().positive().default(30)
 })
 
+const hostEnvSchema = z.object({
+  // Background TCP check cycle for every host (B09).
+  HOST_HEALTH_CHECK_INTERVAL_SEC: z.coerce.number().int().positive().default(60)
+})
+
+const recordingEnvSchema = z.object({
+  // Where asciicast v2 recordings (B11) are stored.
+  RECORDINGS_DIR: z.string().min(1).default('recordings'),
+  // Stop writing a recording once it grows beyond this size.
+  RECORDING_MAX_SIZE_MB: z.coerce.number().int().positive().default(20),
+  // Recording files older than this are deleted by the retention job.
+  RECORDING_RETENTION_DAYS: z.coerce.number().int().positive().default(7)
+})
+
 const sftpEnvSchema = z.object({
   // Max upload size for SFTP transfers.
   SFTP_MAX_UPLOAD_MB: z.coerce.number().int().positive().default(100)
@@ -125,6 +139,8 @@ const envSchema = z.object({
   ...emailEnvSchema.shape,
   ...appEnvSchema.shape,
   ...terminalEnvSchema.shape,
+  ...hostEnvSchema.shape,
+  ...recordingEnvSchema.shape,
   ...sftpEnvSchema.shape,
   ...sessionEnvSchema.shape
 })

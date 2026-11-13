@@ -76,6 +76,7 @@ const createBody: CreateHostBody = {
   username: 'root',
   authType: 'password',
   secret: 'hunter2',
+  recordSessions: false,
   tags: ['prod']
 }
 

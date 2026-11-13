@@ -31,6 +31,10 @@ class HostRepository {
     return qb.orderBy('host.createdAt', 'DESC').take(query.limit).skip(query.offset).getManyAndCount()
   }
 
+  static findAll() {
+    return this.hostRepo.find()
+  }
+
   static create(data: Partial<Host>) {
     return this.hostRepo.save(this.hostRepo.create(data))
   }

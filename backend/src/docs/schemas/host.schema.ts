@@ -32,6 +32,11 @@ const HostSchema = registry.register(
     tags: z.array(z.string()).meta({ example: ['dev'] }),
     hasSecret: z.boolean().meta({ example: true, description: 'Secrets are never returned, only this flag' }),
     hasPassphrase: z.boolean().meta({ example: false }),
+    // In-memory TCP health of the SSH port.
+    status: z.enum(['up', 'down', 'unknown']).meta({ example: 'unknown' }),
+    lastCheckedAt: z.iso.datetime().nullable().meta({ example: null }),
+    // Opt-in asciicast recording of terminal sessions.
+    recordSessions: z.boolean().meta({ example: false }),
     hostKeyFingerprint: z.string().nullable().meta({ example: null }),
     lastConnectedAt: z.iso.datetime().nullable().meta({ example: null }),
     createdAt: z.iso.datetime(),

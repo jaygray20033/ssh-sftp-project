@@ -1,5 +1,7 @@
 import env from '@common/config/env'
 import { SESSION_LOG_CLOSE_REASON_MAX_LENGTH } from '@common/constants'
+import { NotFoundError } from '@common/errors'
+import { Paginated } from '@common/types'
 import { Paginated } from '@common/types'
 
 import { ListSessionsQuery } from './dto'
@@ -23,6 +25,13 @@ class SessionLogService {
   static async getSessions(userId: string, query: ListSessionsQuery): Promise<Paginated<SessionLogResponse>> {
     const [logs, total_count] = await SessionLogRepository.listByUserId(userId, query.limit, query.offset)
     return { entries: logs.map(toSessionLogResponse), limit: query.limit, offset: query.offset, total_count }
+  }
+
+  /** For GET /sessions/:id/recording: the log must belong to the requesting user. */
+  static async getOwnedLog(id: string, userId: string) {
+    const log = await SessionLogRepository.findByIdAndUserId(id, userId)
+    if (!log) throw new NotFoundError('Session log not found')
+    return log
   }
 
   /** Retention job: delete logs older than the configured number of days. */

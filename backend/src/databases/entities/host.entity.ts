@@ -41,6 +41,10 @@ export class Host extends BaseEntity {
   @Column({ type: 'timestamp', nullable: true })
   lastConnectedAt: Date | null
 
+  // Opt-in asciicast recording (B11). Recorded output may contain typed passwords.
+  @Column({ type: 'boolean', default: false })
+  recordSessions: boolean
+
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user: User

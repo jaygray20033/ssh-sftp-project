@@ -22,3 +22,14 @@ export type SshErrorCode = (typeof SshErrorCode)[keyof typeof SshErrorCode]
 export const SSH_READY_TIMEOUT_MS = 10_000
 export const SSH_KEEPALIVE_INTERVAL_MS = 15_000
 export const SSH_TEST_RATE_LIMIT_PER_MIN = 10
+
+// TCP health check for hosts (B09): "up" means the port accepts a TCP connection.
+export const HostStatus = {
+  UP: 'up',
+  DOWN: 'down',
+  UNKNOWN: 'unknown'
+} as const
+
+export type HostStatus = (typeof HostStatus)[keyof typeof HostStatus]
+
+export const HOST_HEALTH_TCP_TIMEOUT_MS = 5_000

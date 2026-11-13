@@ -18,7 +18,9 @@ const SessionLogSchema = registry.register(
     startedAt: z.iso.datetime().meta({ example: '2026-01-15T10:30:00.000Z' }),
     endedAt: z.iso.datetime().nullable().meta({ example: '2026-01-15T11:05:00.000Z' }),
     clientIp: z.string().meta({ example: '203.0.113.5' }),
-    closeReason: z.string().nullable().meta({ example: 'Client disconnected' })
+    closeReason: z.string().nullable().meta({ example: 'Client disconnected' }),
+    // True when the host had session recording enabled and an asciicast file exists.
+    hasRecording: z.boolean().meta({ example: false })
   })
 )
 
@@ -49,5 +51,24 @@ registry.registerPath({
     },
     401: unauthorizedResponse('Missing or invalid access token'),
     422: validationErrorResponse()
+  }
+})
+
+registry.registerPath({
+  method: 'get',
+  path: '/sessions/{id}/recording',
+  tags: ['Sessions'],
+  summary: 'Download the asciicast v2 recording of a session',
+  description:
+    'Available only when the host had `recordSessions` enabled. The file can be replayed with asciinema ' +
+    '(frontend: asciinema-player, Apache-2.0). WARNING: the recording may contain typed passwords.',
+  request: { params: z.object({ id: z.uuid().meta({ example: uuidExample }) }) },
+  responses: {
+    200: {
+      description: 'asciicast v2 file',
+      content: { 'text/x-asciicast': { schema: z.string() } }
+    },
+    401: unauthorizedResponse('Missing or invalid access token'),
+    404: { description: 'Session log not found, or no recording exists for it' }
   }
 })

@@ -32,6 +32,8 @@ const CreateHostBodyBaseSchema = z.object({
   port: z.int().min(1).max(65535).default(22),
   username: z.string().trim().min(1).max(100),
   authType: authTypeSchema,
+  // Opt-in session recording; recorded output may contain typed passwords.
+  recordSessions: z.boolean().default(false),
   // Password or PEM private key. Stored encrypted, never returned.
   secret: z.string().min(1).max(HOST_SECRET_MAX_LENGTH),
   passphrase: z.string().max(1024).optional(),

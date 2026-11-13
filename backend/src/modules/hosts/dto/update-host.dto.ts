@@ -15,7 +15,8 @@ const UpdateHostBodyBaseSchema = z
     secret: z.string().min(1).max(HOST_SECRET_MAX_LENGTH),
     // null removes the stored passphrase.
     passphrase: z.string().max(1024).nullable(),
-    tags: tagsSchema
+    tags: tagsSchema,
+    recordSessions: z.boolean()
   })
   .partial()
 

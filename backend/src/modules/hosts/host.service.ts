@@ -7,6 +7,7 @@ import { assertHostAllowed } from '@common/utils/network-guard'
 import { Host } from '@entities/host.entity'
 
 import { CreateHostBody, ListHostsQuery, UpdateHostBody } from './dto'
+import HostHealthService from './host-health.service'
 import { HostResponse, toHostResponse } from './host.mapper'
 import HostRepository from './host.repository'
 import SshService, { TestHostResult } from './ssh.service'
@@ -35,6 +36,7 @@ class HostService {
       encryptedSecret: CryptoService.encrypt(dto.secret),
       encryptedPassphrase:
         dto.authType === AuthType.PRIVATE_KEY && dto.passphrase ? CryptoService.encrypt(dto.passphrase) : null,
+      recordSessions: dto.recordSessions,
       userId
     })
     return toHostResponse(host)
@@ -52,6 +54,7 @@ class HostService {
     if (dto.username !== undefined) data.username = dto.username
     if (dto.authType !== undefined) data.authType = dto.authType
     if (dto.tags !== undefined) data.tags = dto.tags
+    if (dto.recordSessions !== undefined) data.recordSessions = dto.recordSessions
     if (dto.secret !== undefined) data.encryptedSecret = CryptoService.encrypt(dto.secret)
     if (dto.passphrase !== undefined) {
       data.encryptedPassphrase = dto.passphrase ? CryptoService.encrypt(dto.passphrase) : null
@@ -72,11 +75,16 @@ class HostService {
   static async deleteHost(id: string, userId: string) {
     await this.getOwnedHost(id, userId)
     await HostRepository.delete(id, userId)
+    // Drop the stale health entry (B09).
+    HostHealthService.clear(id)
   }
 
   static async testHost(id: string, userId: string): Promise<TestHostResult> {
     const host = await this.getOwnedHost(id, userId)
-    return SshService.testConnection(host)
+    const result = await SshService.testConnection(host)
+    // A real SSH test is stronger evidence than a TCP probe.
+    HostHealthService.recordResult(id, result.ok)
+    return result
   }
 
   static async trustHostKey(id: string, userId: string, fingerprint: string): Promise<HostResponse> {

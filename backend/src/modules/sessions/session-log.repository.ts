@@ -7,6 +7,11 @@ class SessionLogRepository {
     return this.repo.save(this.repo.create(data))
   }
 
+  // Ownership check for the recording download endpoint.
+  static findByIdAndUserId(id: string, userId: string) {
+    return this.repo.findOne({ where: { id, userId } })
+  }
+
   static async close(id: string, endedAt: Date, closeReason: string) {
     await this.repo.update({ id }, { endedAt, closeReason })
   }

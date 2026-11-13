@@ -19,6 +19,7 @@ import { NotFoundError } from '@common/errors'
 
 import HostService from '@modules/hosts/host.service'
 import SshService, { SshError } from '@modules/hosts/ssh.service'
+import RecordingService, { Recorder } from '@modules/sessions/recording.service'
 import SessionLogService from '@modules/sessions/session-log.service'
 
 import { Host } from '@entities/host.entity'
@@ -44,6 +45,7 @@ class TerminalSession {
   private hostKeyTimer?: NodeJS.Timeout
   private hostKeyPrompt?: { accept: () => void; cancel: () => void }
   private sessionLogId?: string
+  private recorder?: Recorder
   // A UTF-8 character can be split across two SSH packets.
   private readonly decoder = new StringDecoder('utf8')
 
@@ -145,7 +147,12 @@ class TerminalSession {
       }
 
       this.stream = stream
-      const forward = (chunk: Buffer) => this.send({ type: 'data', data: this.decoder.write(chunk) })
+      // Recording (opt-in per host): capture exactly what the browser sees.
+      const record = (data: string) => {
+        if (this.recorder) RecordingService.appendOutput(this.recorder, data)
+        this.send({ type: 'data', data })
+      }
+      const forward = (chunk: Buffer) => record(this.decoder.write(chunk))
       stream.on('data', forward)
       stream.stderr.on('data', forward)
       stream.on('close', () => this.close('SSH shell closed', TerminalCloseCode.NORMAL))
@@ -201,10 +208,18 @@ class TerminalSession {
         clientIp: this.clientIp
       })
       this.sessionLogId = log.id
+      // Opt-in recording starts together with the audit log entry.
+      if (host.recordSessions) {
+        this.recorder = RecordingService.start(log.id, host, this.cols, this.rows)
+      }
       // close() may have already run while the SSH connection was being set up.
       if (this.closed) {
         await SessionLogService.close(log.id, 'Client disconnected')
         this.sessionLogId = undefined
+        if (this.recorder) {
+          RecordingService.stop(this.recorder)
+          this.recorder = undefined
+        }
       }
     } catch (err) {
       logger.warn({ userId: this.userId, hostId: this.hostId, err }, 'Could not write session audit log')
@@ -291,6 +306,17 @@ class TerminalSession {
       void Promise.resolve(SessionLogService.close(logId, reason)).catch((err) => {
         logger.warn({ userId: this.userId, logId, err }, 'Could not close session audit log')
       })
+    }
+
+    // Finalize the recording file, whatever the reason was.
+    if (this.recorder) {
+      const recorder = this.recorder
+      this.recorder = undefined
+      try {
+        RecordingService.stop(recorder)
+      } catch (err) {
+        logger.warn({ userId: this.userId, err }, 'Could not finalize session recording')
+      }
     }
 
     logger.info({ userId: this.userId, hostId: this.hostId, reason }, 'Terminal session closed')
