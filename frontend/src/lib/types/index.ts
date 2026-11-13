@@ -105,6 +105,9 @@ export interface ChangePasswordRequest {
 
 export type AuthType = 'password' | 'private_key'
 
+// In-memory TCP health of the SSH port, refreshed by a backend job (B09).
+export type HostStatus = 'up' | 'down' | 'unknown'
+
 // Secrets are never returned by the API: only the has* flags.
 export interface Host {
   id: string
@@ -116,6 +119,10 @@ export interface Host {
   tags: string[]
   hasSecret: boolean
   hasPassphrase: boolean
+  status: HostStatus
+  lastCheckedAt: string | null
+  // Opt-in asciicast recording (B11); recorded output may contain typed passwords.
+  recordSessions: boolean
   hostKeyFingerprint: string | null
   lastConnectedAt: string | null
   createdAt: string
@@ -131,6 +138,7 @@ export interface CreateHostRequest {
   secret: string
   passphrase?: string
   tags?: string[]
+  recordSessions?: boolean
 }
 
 // Omit `secret` to keep the stored one; `passphrase: null` removes it.
@@ -162,6 +170,8 @@ export interface SessionLog {
   endedAt: string | null
   clientIp: string
   closeReason: string | null
+  // True when the host had recording enabled and an asciicast file exists.
+  hasRecording: boolean
 }
 
 export interface PaginatedSessionLogs {

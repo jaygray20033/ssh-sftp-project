@@ -1,11 +1,12 @@
-import { Plus, Search, Server, Loader2 } from 'lucide-react'
+import { Plus, Search, Server, Loader2, Tags, X } from 'lucide-react'
 import { useHosts } from './hooks'
 import { HostCard } from './components/HostCard'
 import { HostModal } from './components/HostModal'
 import { DeleteDialog } from './components/DeleteDialog'
+import { TestResultDialog } from './components/TestResultDialog'
 
 export default function HostsPage() {
-  const { hosts, total, isLoading, isError, search, setSearch, openCreateModal } = useHosts()
+  const { hosts, total, tags, isLoading, isError, search, setSearch, tag, setTag, openCreateModal } = useHosts()
 
   return (
     <>
@@ -44,6 +45,35 @@ export default function HostsPage() {
           />
         </div>
 
+        {tags.length > 0 && (
+          <div className='flex items-center gap-2 flex-wrap'>
+            <Tags size={14} style={{ color: 'var(--color-muted)' }} />
+            {tags.map((t) => (
+              <button
+                key={t}
+                onClick={() => setTag(tag === t ? null : t)}
+                className='text-xs font-semibold px-3 py-1.5 rounded-lg cursor-pointer transition-all duration-150'
+                style={{
+                  background: tag === t ? 'var(--color-primary)' : 'var(--color-surface)',
+                  color: tag === t ? '#fff' : 'var(--color-text)',
+                  border: `1.5px solid ${tag === t ? 'var(--color-primary)' : 'var(--color-border)'}`
+                }}
+              >
+                {t}
+              </button>
+            ))}
+            {tag && (
+              <button
+                onClick={() => setTag(null)}
+                className='flex items-center gap-1 text-xs font-semibold px-2 py-1.5 rounded-lg cursor-pointer'
+                style={{ color: 'var(--color-muted)' }}
+              >
+                <X size={12} /> Bỏ lọc
+              </button>
+            )}
+          </div>
+        )}
+
         {isLoading ? (
           <div className='flex items-center justify-center py-24'>
             <Loader2 size={16} className='animate-spin' />
@@ -72,9 +102,9 @@ export default function HostsPage() {
             </div>
             <div>
               <p className='text-lg font-extrabold' style={{ color: 'var(--color-text)' }}>
-                {search ? 'Không có host phù hợp' : 'Chưa có host nào'}
+                {search || tag ? 'Không có host phù hợp' : 'Chưa có host nào'}
               </p>
-              {!search && (
+              {!search && !tag && (
                 <p className='text-sm mt-1 max-w-xs' style={{ color: 'var(--color-muted)' }}>
                   Thêm máy chủ SSH đầu tiên để bắt đầu kết nối ngay trong trình duyệt.
                 </p>
@@ -92,6 +122,7 @@ export default function HostsPage() {
 
       <HostModal />
       <DeleteDialog />
+      <TestResultDialog />
     </>
   )
 }

@@ -13,7 +13,8 @@ const hostSchema = z.object({
   authType: z.enum(['password', 'private_key']),
   secret: z.string().max(16 * 1024, 'Tối đa 16KB'),
   passphrase: z.string().max(1024),
-  tags: z.string()
+  tags: z.string(),
+  recordSessions: z.boolean()
 })
 
 type HostFormValues = z.infer<typeof hostSchema>
@@ -54,9 +55,20 @@ export function HostModal() {
             authType: editingHost.authType,
             secret: '', // never sent back by the API
             passphrase: '',
-            tags: editingHost.tags.join(', ')
+            tags: editingHost.tags.join(', '),
+            recordSessions: editingHost.recordSessions
           }
-        : { name: '', hostname: '', port: 22, username: '', authType: 'password', secret: '', passphrase: '', tags: '' }
+        : {
+            name: '',
+            hostname: '',
+            port: 22,
+            username: '',
+            authType: 'password',
+            secret: '',
+            passphrase: '',
+            tags: '',
+            recordSessions: false
+          }
     )
   }, [showModal, editingHost, reset])
 
@@ -80,6 +92,7 @@ export function HostModal() {
       username: values.username,
       authType: values.authType,
       tags,
+      recordSessions: values.recordSessions,
       // Empty secret while editing = keep the stored one.
       ...(values.secret ? { secret: values.secret } : {}),
       ...(values.authType === 'private_key' && values.passphrase ? { passphrase: values.passphrase } : {})
@@ -277,6 +290,24 @@ export function HostModal() {
               className='w-full px-4 py-2.5 rounded-xl text-sm font-medium outline-none'
               style={inputStyle()}
             />
+          </div>
+
+          <div
+            className='rounded-2xl p-4 space-y-2'
+            style={{ background: 'var(--color-bg)', border: '1.5px solid var(--color-border)' }}
+          >
+            <label
+              className='flex items-center gap-2.5 text-sm font-bold cursor-pointer'
+              style={{ color: 'var(--color-text)' }}
+            >
+              <input type='checkbox' {...register('recordSessions')} />
+              Ghi phiên (phát lại asciicast)
+            </label>
+            <p className='text-xs' style={{ color: 'var(--color-warning)' }}>
+              ⚠ CẢNH BÁO: bản ghi lưu mọi nội dung hiển thị trên màn hình terminal — bao gồm cả mật khẩu bạn gõ vào (ví
+              dụ khi chạy sudo). File ghi nằm trên server dạng văn bản thuần và bị xoá sau 7 ngày. Chỉ bật khi bạn thực
+              sự hiểu rủi ro.
+            </p>
           </div>
 
           <div className='flex gap-3 pt-1'>

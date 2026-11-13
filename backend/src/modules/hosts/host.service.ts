@@ -1,4 +1,4 @@
-import { AuthType } from '@common/constants/host.constant'
+import { AuthType, SshErrorCode } from '@common/constants/host.constant'
 import { BadRequestError, ConflictError, NotFoundError } from '@common/errors'
 import { CryptoService } from '@common/services'
 import { Paginated } from '@common/types'
@@ -82,8 +82,11 @@ class HostService {
   static async testHost(id: string, userId: string): Promise<TestHostResult> {
     const host = await this.getOwnedHost(id, userId)
     const result = await SshService.testConnection(host)
-    // A real SSH test is stronger evidence than a TCP probe.
-    HostHealthService.recordResult(id, result.ok)
+    // A real SSH test is stronger evidence than a TCP probe. Host key failures
+    // still prove the SSH port answers TCP, so do not mark the host "down".
+    const reachable =
+      result.ok || result.code === SshErrorCode.HOST_KEY_UNVERIFIED || result.code === SshErrorCode.HOST_KEY_CHANGED
+    HostHealthService.recordResult(id, reachable)
     return result
   }
 

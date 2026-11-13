@@ -2,6 +2,7 @@ import { useSettingsStore } from './store'
 import { ProfileSection } from './ProfileSection'
 import { PasswordSection } from './PasswordSection'
 import { TwoFASection } from './TwoFASection'
+import { SessionsSection } from './SessionsSection'
 import { DangerZone } from './DangerZone'
 
 export default function SettingsPage() {
@@ -9,7 +10,8 @@ export default function SettingsPage() {
 
   const tabs = [
     { key: 'profile' as const, label: 'Hồ sơ' },
-    { key: 'security' as const, label: 'Bảo mật' }
+    { key: 'security' as const, label: 'Bảo mật' },
+    { key: 'activity' as const, label: 'Phiên SSH' }
   ]
 
   return (
@@ -63,6 +65,7 @@ export default function SettingsPage() {
           <TwoFASection />
         </div>
       )}
+      {activeTab === 'activity' && <SessionsSection />}
 
       <DangerZone />
     </div>

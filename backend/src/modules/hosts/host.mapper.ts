@@ -21,6 +21,8 @@ export function toHostResponse(host: Host) {
     // In-memory TCP health (B09); "unknown" until the first check.
     status: health.status,
     lastCheckedAt: health.lastCheckedAt,
+    // Opt-in recording flag (B11); the UI shows a warning when it is on.
+    recordSessions: host.recordSessions,
     hostKeyFingerprint: host.hostKeyFingerprint,
     lastConnectedAt: host.lastConnectedAt,
     createdAt: host.createdAt,

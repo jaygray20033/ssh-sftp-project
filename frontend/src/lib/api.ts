@@ -21,6 +21,7 @@ export type {
   ChangePasswordRequest,
   AuthType,
   Host,
+  HostStatus,
   CreateHostRequest,
   UpdateHostRequest,
   PaginatedHosts,
@@ -44,3 +45,4 @@ export { usersService } from './services/users.service'
 export { hostsService } from './services/hosts.service'
 export { terminalService } from './services/terminal.service'
 export { sessionsService } from './services/sessions.service'
+export { sftpService } from './services/sftp.service'

@@ -2,7 +2,6 @@ import env from '@common/config/env'
 import { SESSION_LOG_CLOSE_REASON_MAX_LENGTH } from '@common/constants'
 import { NotFoundError } from '@common/errors'
 import { Paginated } from '@common/types'
-import { Paginated } from '@common/types'
 
 import { ListSessionsQuery } from './dto'
 import { SessionLogResponse, toSessionLogResponse } from './session-log.mapper'

@@ -2,8 +2,8 @@ import { create } from 'zustand'
 import type { TwoFactorSetup } from '@lib/types'
 
 interface SettingsUIState {
-  activeTab: 'profile' | 'security'
-  setActiveTab: (tab: 'profile' | 'security') => void
+  activeTab: 'profile' | 'security' | 'activity'
+  setActiveTab: (tab: 'profile' | 'security' | 'activity') => void
   twoFASetup: TwoFactorSetup | null
   setTwoFASetup: (setup: TwoFactorSetup | null) => void
 }

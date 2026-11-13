@@ -161,20 +161,29 @@ Tuần 3: B08, F06, I03. Tuần 4: B09–B12, F07, I05–I08.
 - **Nghiệm thu:** toàn bộ thao tác chạy được qua Swagger/curl; checksum file tải về khớp.
 
 ### B09 (P1) Sức khỏe host (tái sử dụng module monitor)
-- [ ] Thay vì giữ monitor kiểu HTTP/Ping, thêm chế độ "kiểm tra host" TCP cổng SSH cho từng `Host`
+- [x] Thay vì giữ monitor kiểu HTTP/Ping, thêm chế độ "kiểm tra host" TCP cổng SSH cho từng `Host`
       (tái dụng `monitor` + `status-record` hoặc viết service nhẹ riêng; chọn cách ít thay đổi nhất).
-- [ ] `GET /hosts` kèm `status` (`up`/`down`/`unknown`) và `lastCheckedAt`.
-- [ ] Xóa các loại monitor không còn dùng và route/entity thừa (kèm migration), cập nhật OpenAPI.
+      *Module `monitor` không còn trong repo → đã viết service nhẹ riêng (`host-health.service.ts` + store in-memory).*
+- [x] `GET /hosts` kèm `status` (`up`/`down`/`unknown`) và `lastCheckedAt`.
+- [x] Xóa các loại monitor không còn dùng và route/entity thừa (kèm migration), cập nhật OpenAPI.
+      *Không có gì để xóa (monitor đã bị xóa trước đó); OpenAPI Host thêm `status`/`lastCheckedAt`/`recordSessions`.*
 - **Nghiệm thu:** tắt sshd dev thì host chuyển `down` trong ≤ 1 chu kỳ kiểm tra.
+      *Đạt: E2E thật với sshd container (cổng 2222), chu kỳ 2 giây — host `up` khi sshd chạy, sau `docker stop` sshd chuyển `down` trong ≤ 1 chu kỳ.*
 
 ### B10 (P1) Snippets
-- [ ] Entity `Snippet` (name, command, description, userId) + migration; CRUD `/snippets` theo mẫu `monitor`; giới hạn độ dài command 4KB.
-- [ ] Không tự chạy snippet ở backend: frontend gửi nội dung vào terminal như người dùng gõ.
+- [x] Entity `Snippet` (name, command, description, userId) + migration; CRUD `/snippets` theo mẫu `monitor`; giới hạn độ dài command 4KB.
+      *Unique `(userId, name)`, hard delete, sort theo name, search trên name/command/description.*
+- [x] Không tự chạy snippet ở backend: frontend gửi nội dung vào terminal như người dùng gõ.
+      *Backend chỉ lưu/trả chuỗi; mô tả API ghi rõ điều này trong OpenAPI.*
 
 ### B11 (P1) Ghi và phát lại phiên (opt-in)
-- [ ] Cờ `recordSessions` ở từng host (mặc định `false`, cảnh báo rõ trên UI). Khi bật, ghi định dạng asciicast v2 vào `RECORDINGS_DIR`
+- [x] Cờ `recordSessions` ở từng host (mặc định `false`, cảnh báo rõ trên UI). Khi bật, ghi định dạng asciicast v2 vào `RECORDINGS_DIR`
       kèm giới hạn dung lượng và thời gian giữ. Ghi nội dung có thể chứa mật khẩu gõ vào: tài liệu hóa cảnh báo trong `docs/security.md`.
-- [ ] `GET /sessions/:id/recording` trả file; frontend phát lại bằng `asciinema-player` (giấy phép Apache-2.0).
+      *Migration `1780000003000-AddRecordSessionsToHosts`; cap `RECORDING_MAX_SIZE_MB` (default 20) + retention
+      `RECORDING_RETENTION_DAYS` (default 7, job hourly gộp với job session_logs). Cảnh báo đã thêm vào `docs/security.md`
+      (phần frontend/UI cảnh báo là việc của F-task).*
+- [x] `GET /sessions/:id/recording` trả file; frontend phát lại bằng `asciinema-player` (giấy phép Apache-2.0).
+      *Backend trả stream `text/x-asciicast` + `hasRecording` trong `GET /sessions`; player là việc frontend (F-task).*
 
 ### B12 (P2) Hệ thống plugin
 - [ ] Thư mục `PLUGINS_DIR`; mỗi plugin là một thư mục có `shelldeck-plugin.json` (`name`, `version`, `main`, `hooks`) và file JS.
@@ -193,15 +202,21 @@ Tuần 3: B08, F06, I03. Tuần 4: B09–B12, F07, I05–I08.
 - [x] Trang `Dashboard`: số host, số phiên gần đây, nút "Kết nối nhanh" (dùng dữ liệu thật từ API, không dữ liệu giả).
 - **Nghiệm thu:** `pnpm build` sạch; điều hướng giữa các trang không lỗi console.
 
-w
+### F02 (P0) Kiểu dữ liệu và service
+- [x] lib/types: Host, CreateHostRequest, UpdateHostRequest, TestHostResult, SessionLog, SftpEntry.
+- [x] lib/services/hosts.service.ts (list/get/create/update/delete/test/trustHostKey), terminal.service.ts (createTicket(hostId)), sessions.service.ts, sftp.service.ts (B08 đã xong, cập nhật F02); theo đúng mẫu monitors.service.ts.
+- **Ghi chú:** types đồng bộ B09 (`HostStatus`, `Host.status/lastCheckedAt`) và B11 (`Host.recordSessions`, `SessionLog.hasRecording`); `sftp.service.ts` mới (list/download-blob/upload-multipart + onProgress/rename/mkdir/remove) theo route `/hosts/:id/sftp/*`; export thêm `sftpService` + `HostStatus` qua `lib/api.ts`.
+
 ### F03 (P0) Trang Hosts
-- [ ] `pages/hosts/` theo mẫu `pages/monitors/`: `store.ts`, `hooks.ts`, `index.tsx`, `components/HostCard`, `HostModal`, `DeleteDialog`.
-- [ ] `HostModal` (react-hook-form + zod): name, hostname, port, username, authType (radio), secret (input password hoặc textarea cho private key
-      + nút chọn file `.pem`), passphrase (chỉ khi key), tags. Khi sửa: trường secret để trống nghĩa là giữ nguyên.
-- [ ] `HostCard`: tên, `user@host:port`, tags, trạng thái, nút **Kết nối**, **Files**, **Kiểm tra**, **Sửa**, **Xóa**.
-- [ ] Tìm kiếm và lọc theo tag; trạng thái trống/đang tải/lỗi rõ ràng; xác nhận trước khi xóa.
-- [ ] Nút **Kiểm tra** gọi `/hosts/:id/test`; hiển thị fingerprint mới và hộp thoại "Tin tưởng host này?" → gọi `trust-host-key`.
-- **Nghiệm thu:** CRUD đầy đủ; secret không bao giờ xuất hiện lại trong UI hoặc tab Network response.
+- [x] `pages/hosts/` theo mẫu `pages/monitors/`: `store.ts`, `hooks.ts`, `index.tsx`, `components/HostCard`, `HostModal`, `DeleteDialog`.
+- [x] `HostModal` (react-hook-form + zod): name, hostname, port, username, authType (radio), secret (input password hoặc textarea cho private key
+      + nút chọn file `.pem`), passphrase (chỉ khi key), tags, checkbox `recordSessions` (B11, kèm cảnh báo ⚠ mật khẩu có thể bị ghi). Khi sửa: trường secret để trống nghĩa là giữ nguyên.
+- [x] `HostCard`: tên, `user@host:port`, tags, trạng thái (dot up/down/unknown + `lastCheckedAt`), badge "Đang ghi phiên", nút **Kết nối**, **Files**, **Kiểm tra**, **Sửa**, **Xóa**.
+- [x] Tìm kiếm và lọc theo tag (chips phái sinh từ hosts đã load); trạng thái trống/đang tải/lỗi rõ ràng; xác nhận trước khi xóa.
+- [x] Nút **Kiểm tra** gọi `/hosts/:id/test`; hiển thị fingerprint mới và hộp thoại "Tin tưởng host này?" → gọi `trust-host-key` rồi tự retest.
+- [x] **Nghiệm thu:** CRUD đầy đủ; secret không bao giờ xuất hiện lại trong UI hoặc tab Network response.
+- **Ghi chú nghiệm thu (E2E qua UI thật):** tạo host e2e-web (recordSessions:true, tags test/web) + db-only; card hiện đúng status/badge; flow Kiểm tra → HOST_KEY_UNVERIFIED + fingerprint → "Tin tưởng và thử lại" → "Kết nối thành công (68ms)"; tag filter chip "test" ẩn db-only; edit modal pre-check `recordSessions` đúng từng host, secret placeholder "Để trống để giữ nguyên"; PATCH `recordSessions:false` → badge biến mất; GET /hosts có `recordSessions`, KHÔNG có field `secret`; nút Files điều hướng `/files/:hostId` (trang F06); DeleteDialog xóa db-only hoạt động.
+- **Fix phát hiện khi nghiệm thu:** backend `toHostResponse` thiếu `recordSessions` (đã thêm); `HostService.testHost` đánh dấu host `down` khi fail HOST_KEY_UNVERIFIED/HOST_KEY_CHANGED dù TCP sống — đã sửa `reachable = ok || HOST_KEY_*` (import `SshErrorCode` thêm vào host.constant import).
 
 ### F04 (P0) Trang Terminal
 - [x] `pnpm add @xterm/xterm @xterm/addon-fit @xterm/addon-web-links`; import CSS của xterm.
@@ -218,7 +233,9 @@ w
 - **Nghiệm thu:** vào `vim`, `htop`, `top` hiển thị đúng; đổi kích thước cửa sổ thì terminal co giãn đúng; đóng tab thì phiên SSH đóng.
 
 ### F05 (P0) Trang Settings bổ sung
-- [ ] Giữ nguyên 2FA/đổi mật khẩu; thêm mục "Phiên SSH gần đây" (từ `GET /sessions`) với bảng host, thời gian bắt đầu/kết thúc, IP.
+- [x] Giữ nguyên 2FA/đổi mật khẩu; thêm mục "Phiên SSH gần đây" (từ `GET /sessions`) với bảng host, thời gian bắt đầu/kết thúc, IP.
+- **Ghi chú:** tab mới "Phiên SSH" (`'profile' | 'security' | 'activity'`); `SessionsSection.tsx` bảng 10 phiên gần nhất (host, thời gian → kết thúc, IP, closeReason) qua `sessionsService.getSessions`, chỉ metadata — không lưu nội dung gõ.
+- **Nghiệm thu:** tạo 2 phiên SSH thật (ticket + WS qua sshd 2222) → bảng hiển thị đúng cả 2 phiên với `hasRecording:true`, closeReason "SSH shell closed".
 
 ### F06 (P0 → sau tuần 2) Trang Files (SFTP)
 - [ ] `pages/files/` (route `/files/:hostId`): breadcrumb, bảng thư mục/file (thư mục trước), cột tên/kích thước/ngày sửa/quyền.
@@ -417,3 +434,33 @@ w
   `pages/auth/register/store.ts:25` điều hướng `/verify-email` **không kèm** `token` nên sau khi đăng ký cũng trống.
   Backend `POST /auth/verify-email` chỉ nhận `token`, không có OTP 6 số. Cần chủ repo chốt: đổi page thành bấm link
   verify tự động, hay thêm OTP 6 số vào backend. Ngoài phạm vi task đang làm, chưa sửa.
+- B09: module `monitor` không tồn tại trong repo nên chọn phương án "service nhẹ riêng" theo đúng task cho phép:
+  `host-health.service.ts` (probe TCP + job) + `host-health.store.ts` (NodeCache thuần). Tách store ra riêng vì
+  `host.mapper.ts` cần đọc status cho **mọi** response — nếu mapper import service (kéo `host.repository` → `data-source`
+  → entities) thì test mapper bị lỗi `ColumnTypeUndefinedError` (TypeORM cần `reflect-metadata` trước entity).
+  Status in-memory, restart về `unknown`, không cần cột DB; job qua env `HOST_HEALTH_CHECK_INTERVAL_SEC`
+  (default 60s), chu kỳ đầu sau 5s. `HostService.testHost` và `deleteHost` cũng ghi/clear health.
+  Nghiệm thu E2E thật: sshd container cổng 2222, `HOST_HEALTH_CHECK_INTERVAL_SEC=2` — host `up` khi sshd chạy,
+  `docker stop sshd` → `down` trong ≤ 1 chu kỳ (log "Host status changed" up/down khớp từng lần tắt/bật).
+  Lưu ý: khi DB chết, chu kỳ check log lỗi mỗi interval (chỉ log, không crash).
+- B10: entity `Snippet` + migration `1780000002000-AddSnippetsTable` (unique `(user_id, name)`, FK CASCADE,
+  verify run/revert trên postgres 17 tạm cổng 5433 — sạch; `migration:generate` chỉ khác tên FK như B07, không drift).
+  Module `snippets/` theo mẫu hosts: unique name per user → 409, hard delete, sort theo name, search name+command+description,
+  command ≤ 4KB (`SNIPPET_COMMAND_MAX_LENGTH`). Backend không chạy snippet (chỉ CRUD; OpenAPI ghi rõ "never executed by the backend").
+  10 test service pass; E2E thật: create/list/update/delete 200/201/409 đúng.
+- B11: cột `record_sessions boolean NOT NULL DEFAULT false` (migration `1780000003000`), DTO create/update host.
+  `recording.service.ts` ghi asciicast v2 **đồng bộ** (`fs.writeSync`, vì output terminal nhỏ và test đọc file ngay
+  sau `stop()` — phiên bản stream async đầu tiên làm file chưa tồn tại khi test stat, và unhandled ENOENT khi test
+  cleanup temp dir trước khi stream flush). Cap size `RECORDING_MAX_SIZE_MB` (default 20) — quá cap thì dừng ghi,
+  đóng file, file vẫn hợp lệ; retention `RECORDING_RETENTION_DAYS` (default 7) purge job hourly gộp vào
+  `session-log.job.ts`. Endpoint `GET /sessions/:id/recording` (validateParam uuid + ownership check → 404 nếu không
+  phải của user), `Content-Type: text/x-asciicast`. Mapper `SessionLog` thêm `hasRecording` cho UI nút phát lại.
+  Nghiệm thu E2E thật: tạo host `recordSessions:true` → trust key → ticket → WS gõ `echo hi-from-record` →
+  `GET /sessions` có `hasRecording: true` → tải `.cast` về: header v2 đúng (`version/width/height/timestamp/env`)
+  + events `[elapsed,"o",text]` chứa output gõ. Cảnh báo ghi mật khẩu đã vào `docs/security.md` (mục "Ghi phiên phát lại").
+  Docker compose thêm volume `shelldeck-recordings` mount `/app/recordings` (workdir container là `/app`).
+- Env mới (đã thêm vào `backend/.env.example`, `infra/docker/.env.example`, `docker-compose.yml`):
+  `HOST_HEALTH_CHECK_INTERVAL_SEC` (B09), `RECORDINGS_DIR`, `RECORDING_MAX_SIZE_MB`, `RECORDING_RETENTION_DAYS` (B11).
+- Tổng thể sau B09/B10/B11: `pnpm lint` 0 lỗi 0 warning, `pnpm type-check` sạch, `pnpm test` 99/99 pass.
+  Nghiệm thu E2E một lần bằng script dùng API thật (postgres tạm cổng 5433, sshd cổng 2222, API 8090 — đã xóa hết).
+  Không commit gì — mọi thay đổi ở working tree.
