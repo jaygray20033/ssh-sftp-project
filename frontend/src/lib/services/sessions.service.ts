@@ -6,4 +6,10 @@ export async function getSessions(params: { limit?: number; offset?: number } = 
   return data.sessions
 }
 
-export const sessionsService = { getSessions }
+/** Asciicast v2 file of a session (B11); 404 when nothing was recorded. */
+export async function getRecording(id: string) {
+  const { data } = await http.get<Blob>(`/sessions/${id}/recording`, { responseType: 'blob' })
+  return data
+}
+
+export const sessionsService = { getSessions, getRecording }

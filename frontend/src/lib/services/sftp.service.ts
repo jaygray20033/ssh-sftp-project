@@ -44,6 +44,12 @@ export async function uploadFile(hostId: string, path: string, file: File, onPro
   return data.path
 }
 
+/** Text content of a small file, for the in-browser editor. */
+export async function readFileText(hostId: string, path: string): Promise<string> {
+  const { data } = await http.get<Blob>(`/hosts/${hostId}/sftp/download`, { params: { path }, responseType: 'blob' })
+  return data.text()
+}
+
 export async function renameEntry(hostId: string, from: string, to: string) {
   await http.patch(`/hosts/${hostId}/sftp/rename`, { from, to })
 }
@@ -57,4 +63,12 @@ export async function removeEntry(hostId: string, path: string, recursive = fals
   await http.delete(`/hosts/${hostId}/sftp`, { params: { path, recursive } })
 }
 
-export const sftpService = { listDir, downloadFile, uploadFile, renameEntry, makeDir, removeEntry }
+export const sftpService = {
+  listDir,
+  downloadFile,
+  uploadFile,
+  readFileText,
+  renameEntry,
+  makeDir,
+  removeEntry
+}

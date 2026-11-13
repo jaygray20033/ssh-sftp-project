@@ -15,7 +15,7 @@ export const TERMINAL_FONT_SIZES = { min: 11, max: 24, step: 1 } as const
 
 const PREFS_KEY = 'shelldeck.terminal.preferences'
 
-const defaultPrefs = { fontSize: 14, theme: 'dark' as TerminalTheme }
+const defaultPrefs = { fontSize: 14, theme: 'dark' as TerminalTheme, snippetAutoEnter: false }
 
 function readPrefs() {
   try {
@@ -27,15 +27,19 @@ function readPrefs() {
         ? Math.min(Math.max(parsed.fontSize, TERMINAL_FONT_SIZES.min), TERMINAL_FONT_SIZES.max)
         : defaultPrefs.fontSize
 
-    return { fontSize, theme: parsed.theme === 'light' ? ('light' as TerminalTheme) : ('dark' as TerminalTheme) }
+    return {
+      fontSize,
+      theme: parsed.theme === 'light' ? ('light' as TerminalTheme) : ('dark' as TerminalTheme),
+      snippetAutoEnter: parsed.snippetAutoEnter === true
+    }
   } catch {
     return defaultPrefs
   }
 }
 
-function writePrefs(fontSize: number, theme: TerminalTheme) {
+function writePrefs(prefs: { fontSize: number; theme: TerminalTheme; snippetAutoEnter: boolean }) {
   try {
-    localStorage.setItem(PREFS_KEY, JSON.stringify({ fontSize, theme }))
+    localStorage.setItem(PREFS_KEY, JSON.stringify(prefs))
   } catch {
     // Private-mode storage errors only cost the saved preference.
   }
@@ -48,6 +52,8 @@ interface TerminalUIState {
   search: string
   fontSize: number
   theme: TerminalTheme
+  // F07: snippets send Enter after the command only when this is on.
+  snippetAutoEnter: boolean
   handledIntent: string | null
   openTab: (host: Host) => string
   closeTab: (id: string) => void
@@ -57,6 +63,7 @@ interface TerminalUIState {
   setSearch: (search: string) => void
   setFontSize: (fontSize: number) => void
   setTheme: (theme: TerminalTheme) => void
+  setSnippetAutoEnter: (value: boolean) => void
   markIntentHandled: (value: string | null) => void
 }
 
@@ -69,6 +76,7 @@ export const useTerminalStore = create<TerminalUIState>((set, get) => ({
   search: '',
   fontSize: prefs.fontSize,
   theme: prefs.theme,
+  snippetAutoEnter: prefs.snippetAutoEnter,
   handledIntent: null,
 
   openTab: (host) => {
@@ -101,12 +109,20 @@ export const useTerminalStore = create<TerminalUIState>((set, get) => ({
   setFontSize: (fontSize) => {
     const size = Math.min(Math.max(fontSize, TERMINAL_FONT_SIZES.min), TERMINAL_FONT_SIZES.max)
     set({ fontSize: size })
-    writePrefs(size, get().theme)
+    const state = get()
+    writePrefs({ fontSize: size, theme: state.theme, snippetAutoEnter: state.snippetAutoEnter })
   },
 
   setTheme: (theme) => {
     set({ theme })
-    writePrefs(get().fontSize, theme)
+    const state = get()
+    writePrefs({ fontSize: state.fontSize, theme, snippetAutoEnter: state.snippetAutoEnter })
+  },
+
+  setSnippetAutoEnter: (snippetAutoEnter) => {
+    set({ snippetAutoEnter })
+    const state = get()
+    writePrefs({ fontSize: state.fontSize, theme: state.theme, snippetAutoEnter })
   },
 
   markIntentHandled: (handledIntent) => set({ handledIntent })

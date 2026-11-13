@@ -174,6 +174,10 @@ class SftpService {
   static async mkdir(host: Host, remotePath: string): Promise<void> {
     try {
       const sftp = await this.acquire(host)
+      // OpenSSH reports "already exists" as a plain failure (code 4), so check first
+      // and answer 409 instead of a generic 502.
+      const exists = await sftpCall<boolean>((cb) => sftp.stat(remotePath, (err) => cb(null, !err)))
+      if (exists) throw new ConflictError('Already exists')
       await sftpCall<void>((cb) => sftp.mkdir(remotePath, cb))
     } catch (err) {
       throw toHttpError(err)

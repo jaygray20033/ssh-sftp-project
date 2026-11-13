@@ -19,6 +19,7 @@ import DashboardPage from './pages/dashboard'
 import HostsPage from './pages/hosts'
 import TerminalPage from './pages/terminal'
 import FilesPage from './pages/files'
+import ReplayPage from './pages/replay'
 import SettingsPage from './pages/settings'
 import NotFoundPage from './pages/not-found'
 
@@ -116,6 +117,16 @@ function App() {
             <ProtectedRoute>
               <AppLayout>
                 <FilesPage />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path='/sessions/:id/replay'
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <ReplayPage />
               </AppLayout>
             </ProtectedRoute>
           }

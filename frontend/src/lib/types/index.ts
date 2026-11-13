@@ -206,6 +206,25 @@ export type TerminalServerMessage =
 
 export type TerminalTabStatus = 'connecting' | 'open' | 'closed' | 'error'
 
+// ─── Snippets ────────────────────────────────────────────────────────────────
+
+// B10: a named shell command the user can type into a terminal tab.
+export interface Snippet {
+  id: string
+  name: string
+  command: string
+  description: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface PaginatedSnippets {
+  entries: Snippet[]
+  limit: number
+  offset: number
+  total_count?: number
+}
+
 // ─── SFTP ────────────────────────────────────────────────────────────────────
 
 export type SftpEntryType = 'file' | 'directory' | 'symlink' | 'other'

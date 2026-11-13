@@ -5,6 +5,7 @@ import type { Host, TerminalHostKeyPrompt, TerminalTabStatus } from '@lib/types'
 import { TerminalConnection, type ConnectionNotice } from '../connection'
 import { HostKeyDialog } from './HostKeyDialog'
 import { terminalSurface } from '../themes'
+import { registerConnection, unregisterConnection } from '../registry'
 import { useTerminalStore, type TerminalTab } from '../store'
 
 const statusText: Record<TerminalTabStatus, string> = {
@@ -49,8 +50,10 @@ export function TerminalTabView({ tab, host, isActive }: TerminalTabProps) {
 
     connectionRef.current = connection
     connection.attach(container)
+    registerConnection(tab.id, connection)
 
     return () => {
+      unregisterConnection(tab.id)
       connectionRef.current = null
       connection.dispose()
     }

@@ -124,6 +124,14 @@ export class TerminalConnection {
     this.syncSize()
   }
 
+  /** Types text into the live shell like keystrokes (F07 snippets). Enter only when asked. */
+  submitText(text: string, autoEnter: boolean): boolean {
+    const sent = this.send({ type: 'input', data: text.trimEnd() + (autoEnter ? '\r' : '') })
+    if (sent) this.term.focus()
+
+    return sent
+  }
+
   dispose(): void {
     if (this.disposed) return
     this.disposed = true

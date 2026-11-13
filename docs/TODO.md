@@ -238,16 +238,28 @@ Tuần 3: B08, F06, I03. Tuần 4: B09–B12, F07, I05–I08.
 - **Nghiệm thu:** tạo 2 phiên SSH thật (ticket + WS qua sshd 2222) → bảng hiển thị đúng cả 2 phiên với `hasRecording:true`, closeReason "SSH shell closed".
 
 ### F06 (P0 → sau tuần 2) Trang Files (SFTP)
-- [ ] `pages/files/` (route `/files/:hostId`): breadcrumb, bảng thư mục/file (thư mục trước), cột tên/kích thước/ngày sửa/quyền.
-- [ ] Upload: kéo thả + nút chọn file, thanh tiến độ (`onUploadProgress`), nhiều file; tải xuống bằng `responseType: 'blob'`
+- [x] `pages/files/` (route `/files/:hostId`): breadcrumb, bảng thư mục/file (thư mục trước), cột tên/kích thước/ngày sửa/quyền.
+- [x] Upload: kéo thả + nút chọn file, thanh tiến độ (`onUploadProgress`), nhiều file; tải xuống bằng `responseType: 'blob'`
       (vì xác thực bằng header Bearer, không dùng thẻ `<a href>` trực tiếp); tạo thư mục, đổi tên, xóa (xác nhận) bằng dialog.
-- [ ] Xử lý lỗi `HOST_KEY_UNVERIFIED`: hướng dẫn "Kiểm tra host trước".
-- [ ] (P2) Xem/sửa file văn bản nhỏ (<1MB) bằng textarea và nút Lưu.
+- [x] Xử lý lỗi `HOST_KEY_UNVERIFIED`: hướng dẫn "Kiểm tra host trước".
+- [x] (P2) Xem/sửa file văn bản nhỏ (<1MB) bằng textarea và nút Lưu.
 - **Nghiệm thu:** upload/download file ≥ 20MB đúng checksum; điều hướng thư mục bằng breadcrumb đúng.
+- **Ghi chú:** `pages/files/components/` = FileBrowser (điều hướng + upload tuần tự từng file, kéo/thả), Breadcrumbs (nối prefix từng cấp),
+      FileTable (thư mục trước, cột quyền/kích thước/ngày), PromptDialog (mkdir/rename), DeleteDialog (checkbox `recursive` chỉ hiện với thư mục),
+      UploadPanel (thanh tiến độ), TextEditDialog (<1MB, lưu đè bằng upload cùng tên). `utils.ts` chứa `fullPath/parentDir/isHostKeyError/MAX_EDIT_SIZE`.
+- **Fix phát hiện khi nghiệm thu (backend):** `sftp.controller.ts` dùng `this.getTrustedHost` trong static handler → mọi route SFTP trả 500
+      `TypeError`; đã đổi 6 chỗ sang `SftpController.getTrustedHost`. `SftpService.mkdir` stat trước để trả 409 "Already exists"
+      thay vì 502 (OpenSSH báo mkdir trùng tên bằng mã lỗi chung `SSH_FX_FAILURE`).
 
 ### F07 (P1) Snippets và phát lại phiên
-- [ ] Bảng snippets trong Terminal (bấm để gửi lệnh vào tab hiện tại, không tự nhấn Enter trừ khi bật tùy chọn).
-- [ ] Trang phát lại phiên bằng `asciinema-player` (sau B11).
+- [x] Bảng snippets trong Terminal (bấm để gửi lệnh vào tab hiện tại, không tự nhấn Enter trừ khi bật tùy chọn).
+- [x] Trang phát lại phiên bằng `asciinema-player` (sau B11).
+- **Ghi chú:** `SnippetsPanel` (cột phải, chỉ hiện ở màn hình `xl`) gửi lệnh qua `connection.submitText()` — frame `input` thô, chỉ nối `\r`
+      khi bật "Tự Enter"; `registry.ts` giữ kết nối sống theo tab id để panel tìm đúng tab đang active; lưu `snippetAutoEnter` trong prefs (localStorage).
+- **Ghi chú phát lại:** `pages/replay/index.tsx` route `/sessions/:id/replay`, tải blob `/sessions/:id/recording` (Bearer) rồi đưa cho
+      `asciinema-player` qua `{ data, parser: 'asciicast' }` (không dùng URL trực tiếp vì phải kèm header); theme theo terminal (monokai/tango),
+      có nút tải `.cast`; link "Phát lại" thêm ở cột mới của bảng phiên trong Settings. Trang Sessions hiện thị "—" khi `hasRecording=false`, 404 → hướng dẫn bật ghi phiên.
+- **Lưu ý:** thêm dependency `asciinema-player@3.18.0` (Apache-2.0); bundle JS tăng lên ~1.3MB (`build` cảnh báo chunk >500kB từ trước F07).
 
 ---
 

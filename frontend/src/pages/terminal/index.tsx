@@ -5,6 +5,7 @@ import type { TestHostResult } from '@lib/types'
 import { formatFromNow } from '@lib/format'
 import { ConnectionConsole } from './components/ConnectionConsole'
 import { HostPicker } from './components/HostPicker'
+import { SnippetsPanel } from './components/SnippetsPanel'
 import { TabBar } from './components/TabBar'
 import { TerminalTabView } from './components/TerminalTab'
 import { useLeaveGuard, useTerminalHosts, useTestHost, useTrustHostKey } from './hooks'
@@ -154,14 +155,19 @@ export default function TerminalPage() {
           <div className='space-y-4 min-w-0'>
             <TabBar tabs={tabs} activeTabId={activeTabId} onSelect={setActiveTab} onClose={closeTab} />
 
-            {tabs.map((tab) => (
-              <TerminalTabView
-                key={tab.id}
-                tab={tab}
-                host={hosts.find((item) => item.id === tab.hostId)}
-                isActive={tab.id === activeTabId}
-              />
-            ))}
+            <div className='grid gap-4 xl:grid-cols-[minmax(0,1fr)_17rem] items-start'>
+              <div className='min-w-0 space-y-4'>
+                {tabs.map((tab) => (
+                  <TerminalTabView
+                    key={tab.id}
+                    tab={tab}
+                    host={hosts.find((item) => item.id === tab.hostId)}
+                    isActive={tab.id === activeTabId}
+                  />
+                ))}
+              </div>
+              <SnippetsPanel />
+            </div>
           </div>
         ) : host ? (
           <div className='space-y-4 min-w-0'>

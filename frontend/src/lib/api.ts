@@ -29,6 +29,8 @@ export type {
   TestHostResult,
   SessionLog,
   PaginatedSessionLogs,
+  Snippet,
+  PaginatedSnippets,
   TerminalHostKeyStatus,
   TerminalHostKeyPrompt,
   TerminalClientMessage,
@@ -45,4 +47,5 @@ export { usersService } from './services/users.service'
 export { hostsService } from './services/hosts.service'
 export { terminalService } from './services/terminal.service'
 export { sessionsService } from './services/sessions.service'
+export { snippetsService } from './services/snippets.service'
 export { sftpService } from './services/sftp.service'

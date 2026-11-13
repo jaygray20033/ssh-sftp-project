@@ -1,3 +1,19 @@
+const units = ['B', 'KB', 'MB', 'GB', 'TB']
+
+// Short size label for the Files table.
+export function formatBytes(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes < 0) return '—'
+
+  let value = bytes
+  let unit = 0
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024
+    unit += 1
+  }
+
+  return `${unit === 0 ? String(value) : value.toFixed(1)} ${units[unit]}`
+}
+
 const dateTime = new Intl.DateTimeFormat('vi-VN', {
   day: '2-digit',
   month: '2-digit',
