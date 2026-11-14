@@ -1,0 +1,6 @@
+{
+  "name": "example-webhook",
+  "version": "0.1.0",
+  "main": "index.js",
+  "hooks": ["onSessionStart", "onSessionEnd", "registerRoutes"]
+}

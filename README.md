@@ -24,6 +24,7 @@ ShellDeck là ứng dụng web mã nguồn mở để dùng **SSH và SFTP ngay 
 - [x] Terminal SSH nhiều tab (xterm.js + WebSocket), xác minh host key
 - [x] SFTP: duyệt, tải lên, tải xuống, đổi tên, xóa
 - [x] Nhật ký phiên SSH (mặc định không ghi nội dung gõ)
+- [x] Hệ thống plugin: hook khi mở/đóng phiên và route riêng, plugin mẫu trong `plugins/` — xem [docs/plugin-guide.md](docs/plugin-guide.md)
 
 ### Chặn kết nối nội bộ (SSRF guard)
 
@@ -69,7 +70,8 @@ Chi tiết: [docs/development.md](docs/development.md). Đóng góp: [.github/CO
 backend/   Node 22 · Express 5 · TypeORM · PostgreSQL
 frontend/  React 19 · Vite · Tailwind 4 · Zustand · TanStack Query
 infra/     docker/ (compose, Dockerfile, .env.example) · nginx/ (web.conf, host.conf)
-docs/      kiến trúc, triển khai, bảo mật, quyền riêng tư, giấy phép bên thứ ba
+plugins/   plugin mẫu (example-webhook) — thư mục nạp qua PLUGINS_DIR
+docs/      kiến trúc, triển khai, bảo mật, quyền riêng tư, hệ plugin, giấy phép bên thứ ba
 .github/   CI, release, issue/PR template, CONTRIBUTING, SECURITY
 ```
 

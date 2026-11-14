@@ -19,6 +19,7 @@ import { NotFoundError } from '@common/errors'
 
 import HostService from '@modules/hosts/host.service'
 import SshService, { SshError } from '@modules/hosts/ssh.service'
+import PluginService from '@modules/plugins/plugin.service'
 import RecordingService, { Recorder } from '@modules/sessions/recording.service'
 import SessionLogService from '@modules/sessions/session-log.service'
 
@@ -45,6 +46,7 @@ class TerminalSession {
   private hostKeyTimer?: NodeJS.Timeout
   private hostKeyPrompt?: { accept: () => void; cancel: () => void }
   private sessionLogId?: string
+  private hostLabel?: string
   private recorder?: Recorder
   // A UTF-8 character can be split across two SSH packets.
   private readonly decoder = new StringDecoder('utf8')
@@ -208,6 +210,7 @@ class TerminalSession {
         clientIp: this.clientIp
       })
       this.sessionLogId = log.id
+      this.hostLabel = host.name
       // Opt-in recording starts together with the audit log entry.
       if (host.recordSessions) {
         this.recorder = RecordingService.start(log.id, host, this.cols, this.rows)
@@ -220,7 +223,16 @@ class TerminalSession {
           RecordingService.stop(this.recorder)
           this.recorder = undefined
         }
+        return
       }
+
+      // Plugin hook: user id, host label and time only — no credentials, no terminal content.
+      void PluginService.emitSessionStart({
+        userId: this.userId,
+        sessionId: log.id,
+        hostLabel: host.name,
+        startedAt: log.startedAt.toISOString()
+      })
     } catch (err) {
       logger.warn({ userId: this.userId, hostId: this.hostId, err }, 'Could not write session audit log')
     }
@@ -302,9 +314,18 @@ class TerminalSession {
     // Close the audit log entry, whatever the reason was.
     if (this.sessionLogId) {
       const logId = this.sessionLogId
+      const hostLabel = this.hostLabel ?? ''
       this.sessionLogId = undefined
       void Promise.resolve(SessionLogService.close(logId, reason)).catch((err) => {
         logger.warn({ userId: this.userId, logId, err }, 'Could not close session audit log')
+      })
+
+      void PluginService.emitSessionEnd({
+        userId: this.userId,
+        sessionId: logId,
+        hostLabel,
+        endedAt: new Date().toISOString(),
+        reason
       })
     }
 

@@ -5,6 +5,7 @@ import AuthenticateMiddleware from '@common/middlewares/auth.middleware'
 import AuthRoute from '@modules/auth/auth.route'
 import HealthRoute from '@modules/health/health.route'
 import HostRoute from '@modules/hosts/host.route'
+import PluginRoute from '@modules/plugins/plugin.route'
 import SessionRoute from '@modules/sessions/session.route'
 import SnippetRoute from '@modules/snippets/snippet.route'
 import TerminalRoute from '@modules/terminal/terminal.route'
@@ -19,5 +20,6 @@ router.use('/hosts', AuthenticateMiddleware.authenticate, HostRoute)
 router.use('/terminal', AuthenticateMiddleware.authenticate, TerminalRoute)
 router.use('/sessions', AuthenticateMiddleware.authenticate, SessionRoute)
 router.use('/snippets', AuthenticateMiddleware.authenticate, SnippetRoute)
+router.use('/plugins', AuthenticateMiddleware.authenticate, PluginRoute)
 
 export default router

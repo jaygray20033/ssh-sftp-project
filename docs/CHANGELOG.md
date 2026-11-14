@@ -13,3 +13,6 @@
 - `infra/docker/docker-compose.yml` (`db`, `api`, `web`) và `docker-compose.dev.yml` (PostgreSQL + SSH thử).
 - CI (lint, type-check, test, build, Docker build) và workflow release lên GHCR.
 - LICENSE (MIT), README song ngữ, CONTRIBUTING, SECURITY, issue/PR template.
+- Hệ thống plugin: plugin JavaScript đặt trong `PLUGINS_DIR` (khai báo `shelldeck-plugin.json`) với ba hook
+  `onSessionStart` / `onSessionEnd` / `registerRoutes`, plugin lỗi bị bỏ qua kèm log chứ không làm sập server;
+  plugin mẫu `plugins/example-webhook` và hướng dẫn `docs/plugin-guide.md`. Docker mount `plugins/` vào `/app/plugins`.

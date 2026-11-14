@@ -186,10 +186,10 @@ Tuần 3: B08, F06, I03. Tuần 4: B09–B12, F07, I05–I08.
       *Backend trả stream `text/x-asciicast` + `hasRecording` trong `GET /sessions`; player là việc frontend (F-task).*
 
 ### B12 (P2) Hệ thống plugin
-- [ ] Thư mục `PLUGINS_DIR`; mỗi plugin là một thư mục có `shelldeck-plugin.json` (`name`, `version`, `main`, `hooks`) và file JS.
-- [ ] Hook tối thiểu: `onSessionStart(ctx)`, `onSessionEnd(ctx)`, `registerRoutes(router)`; `ctx` chỉ gồm userId, hostLabel, thời gian,
+- [x] Thư mục `PLUGINS_DIR`; mỗi plugin là một thư mục có `shelldeck-plugin.json` (`name`, `version`, `main`, `hooks`) và file JS.
+- [x] Hook tối thiểu: `onSessionStart(ctx)`, `onSessionEnd(ctx)`, `registerRoutes(router)`; `ctx` chỉ gồm userId, hostLabel, thời gian,
       **không** có secret. Plugin lỗi không được làm sập server (try/catch + log).
-- [ ] Plugin mẫu `plugins/example-webhook` (gửi POST tới URL cấu hình khi phiên bắt đầu/kết thúc) và `docs/plugin-guide.md`.
+- [x] Plugin mẫu `plugins/example-webhook` (gửi POST tới URL cấu hình khi phiên bắt đầu/kết thúc) và `docs/plugin-guide.md`.
 
 ---
 
@@ -266,12 +266,16 @@ Tuần 3: B08, F06, I03. Tuần 4: B09–B12, F07, I05–I08.
 ## I — Hạ tầng, tài liệu, mã nguồn mở
 
 ### I01 (P0) Docker hóa
-- [ ] `frontend/Dockerfile`: build bằng Node 22 + pnpm, runtime `nginx:alpine`, copy `dist`, cấu hình SPA fallback.
-- [ ] Kiểm tra `backend/Dockerfile` hiện có; thêm `HEALTHCHECK` gọi `/api/v1/health`.
-- [ ] `docker-compose.yml` gốc: `db` (postgres:17-alpine, volume, healthcheck), `api` (build `./backend`, `env_file: .env`, chờ db healthy,
+- [x] Dockerfile web: build bằng Node 22 + pnpm, runtime `nginx:alpine`, copy `dist`, cấu hình SPA fallback
+      (đặt tên `infra/docker/web.Dockerfile` thay vì `frontend/Dockerfile` — xem Ghi chú).
+- [x] Kiểm tra `backend/Dockerfile` hiện có; thêm `HEALTHCHECK` gọi `/api/v1/health` (đã có: `infra/docker/api.Dockerfile`,
+      `HEALTHCHECK` fetch `http://127.0.0.1:$PORT/api/v1/health`).
+- [x] `docker-compose.yml` gốc: `db` (postgres:17-alpine, volume, healthcheck), `api` (build `./backend`, `env_file: .env`, chờ db healthy,
       không publish cổng ra ngoài), `web` (nginx, publish `80`/`443`, proxy `/api/` sang `api:8080`).
-- [ ] Chạy migration khi khởi động api (biến `AUTO_MIGRATE=true` gọi migration trong bootstrap, hoặc service `migrate` chạy một lần); kiểm tra `data-source.ts` trước.
-- [ ] `.env.example` gốc có đủ biến, comment cách sinh `JWT_*`, `ENCRYPTION_KEY`.
+      File nằm ở `infra/docker/docker-compose.yml` (chủ repo yêu cầu không để ngoài root); `api` dùng build context gốc repo;
+      `web` chỉ publish `${WEB_PORT:-80}` vì TLS kết thúc ở proxy phía trước (`docs/deploy.md`), cách bật 443 ghi comment trong file.
+- [x] Chạy migration khi khởi động api (biến `AUTO_MIGRATE=true` gọi migration trong bootstrap, hoặc service `migrate` chạy một lần); kiểm tra `data-source.ts` trước.
+- [x] `.env.example` gốc có đủ biến, comment cách sinh `JWT_*`, `ENCRYPTION_KEY` (đủ 36 biến compose cần, ở `infra/docker/.env.example`).
 - **Nghiệm thu:** máy sạch: `cp .env.example .env`, điền secret, `docker compose up -d --build` là dùng được ở `http://localhost`.
 
 ### I02 (P0) Nginx và HTTPS/WSS
@@ -476,3 +480,27 @@ Tuần 3: B08, F06, I03. Tuần 4: B09–B12, F07, I05–I08.
 - Tổng thể sau B09/B10/B11: `pnpm lint` 0 lỗi 0 warning, `pnpm type-check` sạch, `pnpm test` 99/99 pass.
   Nghiệm thu E2E một lần bằng script dùng API thật (postgres tạm cổng 5433, sshd cổng 2222, API 8090 — đã xóa hết).
   Không commit gì — mọi thay đổi ở working tree.
+- B12: `backend/src/modules/plugins/` (`plugin.types.ts` manifest zod + kiểu ctx, `plugin.service.ts` nạp/dispatch,
+  `plugin.route.ts` router rỗng để `modules/index.ts` mount `/api/v1/plugins` sau `AuthenticateMiddleware`).
+  `bootstrap` gọi `PluginService.load()` + `registerRoutes(PluginRoute)` trước `listen` (`index.ts`). Plugin là CommonJS,
+  nạp bằng `createRequire` từ file `main`; `main` bắt buộc nằm trong thư mục plugin (chặn `../`). Hook nhận object đã lọc
+  theo danh sách cho phép (`userId, sessionId, hostLabel` + `startedAt`/`endedAt, reason`) rồi `Object.freeze`, nên không có
+  đường nào lộ secret; dispatch chạy fire-and-forget (plugin treo không chặn terminal). Mẫu: `plugins/example-webhook`
+  (`EXAMPLE_WEBHOOK_URL`), tài liệu `docs/plugin-guide.md`. Docker: `plugins/` mount read-only vào `/app/plugins`.
+  Nghiệm thu: `pnpm test` 111/111 (11 test plugin mới: `plugin.service.test.ts` + `example-plugin.test.ts`, và 1 test gateway
+  kiểm tra hook bắn đúng ctx), container API log
+  `Plugins loaded ["example-webhook@0.1.0"]`, `GET /api/v1/plugins/example-webhook/events` → 401 khi chưa đăng nhập, 200 sau khi login.
+- I01: nghiệm thu bằng project compose tạm `shelldeck-accept` (env sinh mới từ `.env.example`, `WEB_PORT=8099`), không đụng
+  container/volume dev. `docker compose config` hợp lệ; `docker compose build` build lại cả hai image; `up -d` → `db`/`api`/`web` đều
+  `healthy` (HEALTHCHECK của `api.Dockerfile` gọi `/api/v1/health`), API log `Migrations applied: 11` (`AUTO_MIGRATE=true`,
+  `data-source.ts` không tự migrate — vẫn cần `runMigrations()` trong bootstrap), qua nginx: `/` 200, SPA fallback `/hosts` 200,
+  `/api/v1/health` 200, `POST /auth/register` 201 + `POST /auth/login` 200. Sau đó `down -v` dọn sạch (volume accept đã xóa).
+  Thêm mới trong compose: `env_file: .env` cho `api` (biến lạ, ví dụ của plugin, không cần sửa compose), mount `../../plugins`,
+  biến `PLUGINS_DIR`; đường dẫn build `context: ../..` giữ nguyên vì compose vẫn ở `infra/docker/`.
+  Chủ repo chốt **không** đưa compose/`.env.example`/Dockerfile ra gốc repo (note cũ ở dòng trên vẫn đúng), nên các mục
+  "`frontend/Dockerfile`", "`docker-compose.yml` gốc", "`.env.example` gốc" trong checklist được nghiệm thu ở vị trí `infra/docker/`.
+- Env mới (B12): `PLUGINS_DIR` (mặc định `plugins`, Docker `/app/plugins`) — thêm vào `backend/src/common/config/env.ts`,
+  `backend/.env.example`, `infra/docker/.env.example`, `infra/docker/docker-compose.yml`; `EXAMPLE_WEBHOOK_URL` chỉ plugin mẫu đọc
+  trực tiếp từ `process.env` (không khai báo zod, không bắt buộc).
+- Môi trường máy dev khi nghiệm thu I01: đĩa C: 99% (còn ~4.8 GB) nên lần build đầu của Docker fail với
+  `no space left on device`; build lại thì thành công. Có thể cần `docker builder prune` (chưa chạy — ảnh hưởng image khác).

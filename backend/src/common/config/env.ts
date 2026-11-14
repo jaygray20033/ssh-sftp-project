@@ -129,6 +129,12 @@ const sessionEnvSchema = z.object({
   SESSION_LOG_RETENTION_DAYS: z.coerce.number().int().positive().default(90)
 })
 
+const pluginEnvSchema = z.object({
+  // Folder scanned at start-up for plugin sub-folders holding a shelldeck-plugin.json.
+  // Plugins are plain JavaScript running inside this process: only install trusted ones.
+  PLUGINS_DIR: z.string().min(1).default('plugins')
+})
+
 const envSchema = z.object({
   ...serverEnvSchema.shape,
   ...databaseEnvSchema.shape,
@@ -142,7 +148,8 @@ const envSchema = z.object({
   ...hostEnvSchema.shape,
   ...recordingEnvSchema.shape,
   ...sftpEnvSchema.shape,
-  ...sessionEnvSchema.shape
+  ...sessionEnvSchema.shape,
+  ...pluginEnvSchema.shape
 })
 
 type ParsedEnv = z.infer<typeof envSchema>

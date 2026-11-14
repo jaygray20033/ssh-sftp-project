@@ -12,6 +12,7 @@ import { NotFoundError } from '@common/errors'
 import type { HostResponse } from '@modules/hosts/host.mapper'
 import HostService from '@modules/hosts/host.service'
 import { getFingerprint } from '@modules/hosts/ssh.service'
+import PluginService from '@modules/plugins/plugin.service'
 
 import type { Host } from '@entities/host.entity'
 
@@ -25,8 +26,11 @@ import type { AddressInfo } from 'node:net'
 vi.mock('@common/services', () => ({ CryptoService: { decrypt: (value: string) => value } }))
 vi.mock('@modules/hosts/host.repository', () => ({ default: { update: vi.fn() } }))
 vi.mock('@modules/hosts/host.service', () => ({ default: { getOwnedHost: vi.fn(), trustHostKey: vi.fn() } }))
+vi.mock('@modules/plugins/plugin.service', () => ({
+  default: { emitSessionStart: vi.fn(async () => {}), emitSessionEnd: vi.fn(async () => {}) }
+}))
 vi.mock('@modules/sessions/session-log.service', () => ({
-  default: { open: vi.fn(async () => ({ id: 'log-1' })), close: vi.fn(async () => {}) }
+  default: { open: vi.fn(async () => ({ id: 'log-1', startedAt: new Date() })), close: vi.fn(async () => {}) }
 }))
 
 const ORIGIN = 'http://localhost:3000'
@@ -289,6 +293,30 @@ describe('terminal gateway', () => {
     expect(messages.some((m) => m.type === 'closed')).toBe(true)
     await waitFor(() => openChannels === 0)
     expect(TerminalSession.countFor(USER_ID)).toBe(0)
+  })
+
+  it('calls the plugin session hooks with user, host label and time only', async () => {
+    vi.mocked(HostService.getOwnedHost).mockResolvedValue(makeHost({ name: 'plugin-box' }))
+    const { ws, messages } = await connect(TicketService.issue(USER_ID, HOST_ID))
+    await ready(messages)
+
+    expect(PluginService.emitSessionStart).toHaveBeenCalledWith({
+      userId: USER_ID,
+      sessionId: 'log-1',
+      hostLabel: 'plugin-box',
+      startedAt: expect.any(String)
+    })
+
+    ws.close()
+    await delay(50)
+
+    expect(PluginService.emitSessionEnd).toHaveBeenCalledWith({
+      userId: USER_ID,
+      sessionId: 'log-1',
+      hostLabel: 'plugin-box',
+      endedAt: expect.any(String),
+      reason: 'Client disconnected'
+    })
   })
 
   it('limits the number of sessions per user', async () => {

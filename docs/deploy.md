@@ -18,7 +18,9 @@ docker compose logs -f api
 
 - `db`: PostgreSQL 17, dữ liệu trong volume `shelldeck-db`.
 - `api`: không publish cổng (chỉ `web` truy cập được); tự chạy migration khi khởi động (`AUTO_MIGRATE=true`).
+  Toàn bộ `.env` cũng được nạp vào container (`env_file`), nên biến cấu hình riêng của plugin không cần sửa compose.
 - `web`: nginx, publish cổng `${WEB_PORT:-80}`; phục vụ SPA và proxy `/api` (kể cả WebSocket).
+- Plugin: `plugins/` ở gốc repo được mount read-only vào `/app/plugins` (`PLUGINS_DIR`) — xem [plugin-guide.md](plugin-guide.md).
 
 Mở <http://localhost>. Health: <http://localhost/api/v1/health>.
 
